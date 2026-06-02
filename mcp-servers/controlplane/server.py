@@ -89,9 +89,11 @@ def recent_blocks(limit: int = 10) -> list[dict]:
     for e in (d.get("logs", []) if isinstance(d, dict) else []):
         msg = str(e.get("message", ""))
         m = re.search(r"Tool '([^']+)' invocation failed", msg)
+        if not m:
+            continue
         rows.append({
             "time": str(e.get("timestamp", ""))[:19],
-            "tool": m.group(1) if m else None,
+            "tool": m.group(1),
             "outcome": "blocked",
             "request_id": e.get("request_id"),
         })

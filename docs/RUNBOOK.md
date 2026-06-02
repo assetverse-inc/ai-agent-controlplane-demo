@@ -8,6 +8,43 @@
 4. Open three windows: (a) Bob, (b) `make logs` (gateway), (c) a terminal for `verify-controls` / curl.
 5. Record a screen capture of each money shot as a backup.
 
+## Live-room delivery (everyone runs it live)
+
+This section is for the case where a **room of attendees** runs the demo on their own laptops, live, at the same time — not just the presenter. It complements (does not replace) the "Before the talk" checklist above and the "Recovery" table below.
+
+### (a) Setup buffer / pre-flight
+The realities of a live room:
+- **Attendees should run `make quickstart` BEFORE the session** (or during a ~10-minute setup window at the start). The pinned ContextForge gateway image **pulls once** and **7 images build** from source the first time; on conference wifi the network is the risk, not the laptop.
+- Cold start once images are cached: **~38 seconds** end-to-end (measured: `make down && make quickstart` → "16 passed, 0 failed"; slowest phase is the stack bring-up + gateway-health wait). **That number is build-only** — the **first-ever** run on a clean machine additionally pays the one-time ContextForge image pull + 7 source builds, so budget several minutes on first run / conference wifi.
+- **Presenter pre-flight (do all of this before the room arrives):**
+  1. Pre-run `make quickstart` and confirm it ends with the "Ready." card.
+  2. Confirm `make verify-controls` = **16/16** (this is the headless safety net).
+  3. Run **both** `make bob-install` (FinOps analyst persona) and have `make bob-install-operator` ready to switch for Act 2.
+  4. Open the two panes you'll drive from: **Bob** (in the repo dir) and **`make monitor`** (the ContextForge Admin UI — catalog + logs).
+  5. **Record a screen capture of each beat** (each money shot + the operator beats) as a backup, so any single live failure is a fall-back to video, not a dead demo.
+
+### (b) Failure → fallback matrix
+
+| Symptom | Likely cause | In-the-moment fallback | Prevent it |
+|---|---|---|---|
+| "Docker daemon not responding" | Docker Desktop not started | Start it, then re-run `make quickstart` | Start Docker before the session |
+| "preflight: `<tool>` MISSING" | `uv` / `bob` / `npx` / `node` not installed | Install per the preflight hint, then re-run | Install all four beforehand |
+| "`make up` hangs / gateway never healthy" | Slow or blocked image pull (conference wifi / proxy / `ghcr.io`) | Switch to a phone hotspot; or just watch the presenter and take the repo home | Pre-pull with `docker compose pull` beforehand |
+| "Port already in use" | One of 4444 (gateway), 8090 (A2A inspector), 6274/6277 (MCP inspector), 7070 (companion), 3000/9001 (agents) is taken | Stop the conflicting app or free the port | Check those ports are free before |
+| "Bob shows no tools / 'Disconnected'" | The FinOps/Operator UUID changed on reseed (stale UUID in `.bob/mcp.json`) | Re-run `make bob-install` (or `bob-install-operator`), restart Bob. `bob mcp list` "Disconnected" is a static status line until a live session — not a failure | Re-run `bob-install` after any `make seed` / `make demo-reset` |
+| "Bob describes a result instead of doing it" | Bob read the repo source and narrated the answer instead of calling a tool | Tell it to **USE the finbyte-gateway tool**; confirm in the monitor's Logs (no gateway log line = it narrated, didn't call) | Prompt "use the finbyte-gateway tool", and keep `make monitor` visible |
+| "401 from the gateway / wrapper exits at start" | Token isn't a registered user, or the wrapper is missing `DATABASE_URL` | Run `make bob-install` (uses the admin token + bakes `DATABASE_URL=sqlite:////tmp/mcpwrapper.db`) | Always configure Bob via `make bob-install` |
+| "MCP Inspector shows no tools" | Pointed at a backend (not host-exposed) instead of at the gateway | Point it at the gateway `/servers/<uuid>/mcp` + bearer — exactly what `make inspect-mcp` prints | Use `make inspect-mcp` |
+| "A2A Inspector slow / won't start" | First run clones + builds the image (~1–2 min) | Presenter leads the A2A Inspector; attendees use the lighter MCP Inspector | Pre-build it before the talk |
+| "A control didn't fire / 16/16 fails" | Accumulated bad state | `make demo-reset`, then `make verify-controls` | Reset between runs |
+
+### (c) Fallback ladder (if live Bob misbehaves on stage)
+Work down this ladder — the point is that **the demo can never fully fail, because the controls are independently provable** even if the live agent acts up:
+1. **`make verify-controls`** — proves all 16 controls headlessly and deterministically (block/allow), no agent in the loop.
+2. **`make demo`** — the stage-gated walkthrough (cold start → register → scenarios → proof) that pauses at each stage.
+3. **The recorded screen captures** of each beat (from pre-flight step 5).
+4. **The take-home repo + `QUICKSTART.md`** — attendees run it later on their own.
+
 ## On-stage run order (45 min)
 - **Architecture** (5 min): show `make ps` (8 services), `curl` both agent cards to prove Python vs Rust:
   - Python Auditor: `docker compose exec auditor python -c "import urllib.request,json;print(json.load(urllib.request.urlopen('http://localhost:9001/.well-known/agent-card.json'))['name'])"`
