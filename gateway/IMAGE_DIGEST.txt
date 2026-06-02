@@ -1,0 +1,1 @@
+ghcr.io/ibm/mcp-context-forge@sha256:cfeaf233bd6376ac4410309aba7c81a9c5380324f62337e144523179c062eb44
