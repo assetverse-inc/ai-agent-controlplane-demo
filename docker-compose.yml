@@ -54,6 +54,26 @@ services:
     build: ./mcp-servers/notify
     restart: unless-stopped
 
+  # Operator surface: exposes ContextForge's own management + observability as
+  # MCP tools, for Bob's privileged "platform operator" persona (register a new
+  # MCP server, list the catalog, read the audit trail, interrogate OPA).
+  controlplane:
+    build: ./mcp-servers/controlplane
+    environment:
+      GATEWAY_URL: http://gateway:4444
+      GATEWAY_TOKEN: ${AUDITOR_TOKEN:-}   # admin token written to .env.tokens by `make up`
+      OPA_URL: http://opa:8181
+    depends_on:
+      - gateway
+      - opa
+    restart: unless-stopped
+
+  # Runs but is intentionally NOT registered by the seed, so the operator demo
+  # can show Bob registering a brand-new MCP server into ContextForge live.
+  fx-rates:
+    build: ./mcp-servers/fx-rates
+    restart: unless-stopped
+
   auditor:
     build: ./a2a-agents/auditor
     environment:

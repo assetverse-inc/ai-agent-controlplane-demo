@@ -23,6 +23,8 @@ MCP = {
     "erp-payments": "http://erp-payments:8000/mcp",
     "policy-docs": "http://policy-docs:8000/mcp",
     "notify": "http://notify:8000/mcp",
+    # operator surface (ContextForge's own management/observability as MCP tools)
+    "controlplane": "http://controlplane:8000/mcp",
 }
 A2A = {
     "auditor": "http://auditor:9001/",
@@ -55,6 +57,13 @@ def main():
             "description": f"{name} MCP server",
         })
         print(f"[gw] register {name}: {r.status_code} {r.text[:160]}")
+
+    # The operator demo has Bob register 'fx-rates' LIVE; ensure it starts
+    # UNregistered on every seed so the beat is repeatable without a full reset.
+    for g in jget("/gateways"):
+        if g.get("name") == "fx-rates":
+            api("DELETE", f"/gateways/{g['id']}")
+            print("[gw] removed fx-rates (reserved for the operator demo to register live)")
 
     # 2) A2A agents ---------------------------------------------------------
     existing_a = {a.get("name") for a in jget("/a2a")}
@@ -99,9 +108,14 @@ def main():
     finops = ids("list_pending_expenses", "get_expense", "get_receipt",
                  "approve", "reimburse", "get_policy", "wire_limit", "a2a_auditor")
     treasury = ids("wire", "reimburse", "a2a_payments")
+    # Operator persona: privileged platform-operations scope (deliberately
+    # separate from the least-privilege FinOps analyst — the analyst cannot
+    # register servers or read the audit trail; the operator can).
+    operator = ids("register_mcp_server", "list_control_plane",
+                   "recent_blocks", "evaluate_policy")
     # delete+recreate so re-running fixes tool associations
     by_name = {s.get("name"): s.get("id") for s in jget("/servers")}
-    for sname, tids in [("FinOps", finops), ("Treasury", treasury)]:
+    for sname, tids in [("FinOps", finops), ("Treasury", treasury), ("Operator", operator)]:
         if sname in by_name:
             d = api("DELETE", f"/servers/{by_name[sname]}")
             print(f"[server] delete existing {sname}: {d.status_code}")

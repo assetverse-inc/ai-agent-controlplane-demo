@@ -5,7 +5,7 @@ SECRET := demo-only-change-me-0123456789abcdef
 MINT := DATABASE_URL=sqlite:///./.tokmint.db uv run --with mcp-contextforge-gateway -- python -m mcpgateway.utils.create_jwt_token
 COMPOSE := docker compose
 
-.PHONY: help up up-full down seed token token-bob bob-config bob-install companion logs verify-controls demo-reset ps demo
+.PHONY: help up up-full down seed token token-bob bob-config bob-install bob-config-operator bob-install-operator companion logs verify-controls demo-reset ps demo
 
 help:
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n",$$1,$$2}'
@@ -44,11 +44,23 @@ bob-config: ## Print the Bob MCP config (mcpgateway.wrapper, live FinOps UUID + 
 	if [ -z "$$UUID" ]; then echo "FinOps server not found — run 'make seed' first" >&2; exit 1; fi; \
 	sed -e "s|REPLACE_FINOPS_UUID|$$UUID|" -e "s|REPLACE_GATEWAY_TOKEN|$$ADMIN|" bob/mcp.json.template
 
-bob-install: ## Write the fresh config to .bob/mcp.json so Bob connects (run after seed/demo-reset)
+bob-install: ## Write .bob/mcp.json for the FinOps ANALYST persona (least-privilege)
 	@mkdir -p .bob; \
 	$(MAKE) -s bob-config > .bob/mcp.json && \
-	echo "wrote .bob/mcp.json (FinOps UUID + admin token refreshed). Restart Bob, then: bob mcp list"; \
+	echo "wrote .bob/mcp.json — FinOps analyst persona (8 tools, no wire). Restart Bob."; \
 	echo "Note: 'bob mcp list' shows 'Disconnected' until a live session — that is just static status."
+
+bob-config-operator: ## Print the Bob MCP config for the OPERATOR persona (Operator vserver + admin token)
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	UUID=$$(curl -s -H "Authorization: Bearer $$ADMIN" localhost:4444/servers | python3 -c "import sys,json;[print(s['id']) for s in json.load(sys.stdin) if s.get('name')=='Operator']" 2>/dev/null | head -1); \
+	if [ -z "$$UUID" ]; then echo "Operator server not found — run 'make seed' first" >&2; exit 1; fi; \
+	sed -e "s|REPLACE_OPERATOR_UUID|$$UUID|" -e "s|REPLACE_GATEWAY_TOKEN|$$ADMIN|" bob/mcp.operator.json.template
+
+bob-install-operator: ## Write .bob/mcp.json for the OPERATOR persona (register servers, audit, policy)
+	@mkdir -p .bob; \
+	$(MAKE) -s bob-config-operator > .bob/mcp.json && \
+	echo "wrote .bob/mcp.json — platform OPERATOR persona (register/list/audit/evaluate). Restart Bob."; \
+	echo "Switch back to the analyst with: make bob-install"
 
 companion: ## Run the browser companion dashboard on :7070 (watch the control plane while using Bob)
 	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \

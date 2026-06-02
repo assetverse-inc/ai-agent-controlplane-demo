@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "finbyte-operator": {
+      "command": "uvx",
+      "args": ["--from", "mcp-contextforge-gateway", "python", "-m", "mcpgateway.wrapper"],
+      "env": {
+        "MCP_SERVER_URL": "http://localhost:4444/servers/REPLACE_OPERATOR_UUID/sse",
+        "MCP_AUTH": "Bearer REPLACE_GATEWAY_TOKEN",
+        "DATABASE_URL": "sqlite:////tmp/mcpwrapper.db",
+        "MCP_WRAPPER_LOG_LEVEL": "OFF"
+      },
+      "alwaysAllow": [
+        "controlplane-list-control-plane",
+        "controlplane-recent-blocks",
+        "controlplane-evaluate-policy",
+        "controlplane-register-mcp-server"
+      ],
+      "disabled": false
+    }
+  }
+}
