@@ -1,6 +1,6 @@
 # LITE profile (attendee default): gateway (SQLite) + OPA + 4 MCP servers + 2 A2A agents.
 # Full profile (postgres/redis/nginx/phoenix) lives in docker-compose.full.yml.
-name: bob-controlplane-demo
+name: ai-agent-controlplane-demo
 
 services:
   gateway:
@@ -55,10 +55,14 @@ services:
     environment:
       GATEWAY_URL: http://gateway:4444
       GATEWAY_TOKEN: ${AUDITOR_TOKEN:-}
+    ports:
+      - "9001:9001"   # exposed so the A2A inspector (a2aproject/a2a-inspector) can reach it
     depends_on:
       - gateway
     restart: unless-stopped
 
   payments:
     build: ./a2a-agents/payments
+    ports:
+      - "3000:3000"   # exposed for the A2A inspector
     restart: unless-stopped

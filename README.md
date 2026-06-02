@@ -1,4 +1,4 @@
-# bob-controlplane-demo
+# ai-agent-controlplane-demo
 
 **IBM Bob × ContextForge — "Who's in charge of your agents?"**
 
