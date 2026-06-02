@@ -1,7 +1,10 @@
-node_modules/
 __pycache__/
-*.pyc
-.env
-target/
+.bob/
 .DS_Store
+.env
+.env.tokens
+.tokmint.db
 *.db
+*.pyc
+node_modules/
+target/

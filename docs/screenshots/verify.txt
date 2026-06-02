@@ -1,0 +1,23 @@
+== #1 Policy (OPA): wire amount cap ==
+  PASS  $50k wire BLOCKED with policy reason
+  PASS  block cites the T&E policy
+  PASS  $5k wire ALLOWED
+  PASS  $50k WITH approval ALLOWED
+== #1b Agent-mesh: OPA governs the bridged A2A payment call ==
+  PASS  $50k via a2a-payments BLOCKED
+== #2 Data protection: PII + secret on tool output ==
+  PASS  SSN masked
+  PASS  credit card masked
+  PASS  API key redacted
+  PASS  raw card number not leaked
+  PASS  raw API key not leaked
+== #3 Prompt-injection: neutralized in tool output ==
+  PASS  injection neutralized
+  PASS  injected instruction not present
+== #4 Least-privilege: Bob's FinOps server excludes the raw wire tool ==
+  PASS  FinOps exposes approve
+  PASS  FinOps exposes a2a-auditor
+  PASS  FinOps hides the raw wire tool
+== Cross-language A2A: Rust Payments agent executes via gateway ==
+  PASS  Rust agent executed the payment
+  RESULT: 16 passed, 0 failed

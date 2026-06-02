@@ -1,0 +1,58 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>FinByte Control Plane — Proof Dashboard</title>
+<style>
+ body{margin:0;background:#0b0b0b;color:#f4f4f4;font-family:'IBM Plex Sans',-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5}
+ .hd{padding:26px 36px;background:#000;border-bottom:2px solid #0F62FE}
+ .hd h1{margin:0;font-size:24px} .hd p{margin:6px 0 0;color:#a8a8a8}
+ .banner{background:#24a148;color:#fff;font-weight:700;padding:10px 36px;font-size:15px}
+ .wrap{max-width:1200px;margin:0 auto;padding:28px 36px}
+ h2{font-size:18px;border-left:4px solid #0F62FE;padding-left:10px;margin-top:34px}
+ table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+ th,td{border:1px solid #393939;padding:8px 10px;text-align:left;vertical-align:top}
+ th{background:#161616;color:#c6c6c6} td code{color:#78a9ff}
+ .ok{color:#42be65;font-weight:700} .block{color:#fa4d56;font-weight:700}
+ img{width:100%;border:1px solid #393939;border-radius:8px;margin:10px 0}
+ pre{background:#000;border:1px solid #393939;border-radius:8px;padding:14px;overflow:auto;font-size:12.5px;color:#e0e0e0}
+ .mut{color:#8d8d8d;font-size:13px} .pill{background:#0F62FE;color:#fff;border-radius:12px;padding:2px 10px;font-size:11px;margin-right:6px}
+</style></head><body>
+<div class="hd">
+ <h1>IBM Bob × ContextForge — Proof Dashboard</h1>
+ <p><span class="pill">FinByte demo</span> The control plane governs the agent mesh: every control verified live through the running gateway.</p>
+</div>
+<div class="banner">&#10003; make verify-controls — 16 / 16 assertions passing (cold-start reproducible)</div>
+<div class="wrap">
+
+<h2>What this proves</h2>
+<table>
+ <tr><th>#</th><th>Control</th><th>Test</th><th>Result</th></tr>
+ <tr><td>1</td><td>Policy (OPA / Rego)</td><td><code>wire $50,000</code> with no approval</td><td class="block">BLOCKED — "Wire amount 50000 exceeds the $10,000 auto-approve limit … FinByte T&amp;E policy §2."</td></tr>
+ <tr><td>1</td><td>Policy</td><td><code>wire $5,000</code> / <code>$50k + approval</code></td><td class="ok">ALLOWED</td></tr>
+ <tr><td>1b</td><td>Agent-mesh governance</td><td><code>a2a-payments $50k</code> (bridged agent call)</td><td class="block">BLOCKED at the tool hook</td></tr>
+ <tr><td>2</td><td>Data protection</td><td>receipt with SSN / card / API key</td><td class="ok">REDACTED — <code>***-**-6789</code>, <code>****-****-****-1111</code>, <code>[SECRET_REDACTED]</code></td></tr>
+ <tr><td>3</td><td>Prompt-injection</td><td>poisoned receipt memo</td><td class="ok">NEUTRALIZED — <code>[INJECTION_BLOCKED]</code></td></tr>
+ <tr><td>4</td><td>Least-privilege (RBAC)</td><td>Bob's FinOps virtual server</td><td class="ok">wire tool NOT exposed to Bob</td></tr>
+ <tr><td>&#8644;</td><td>Cross-language A2A</td><td>Python Auditor &rarr; gateway &rarr; <b>Rust</b> Payments</td><td class="ok">EXECUTED — "Payment executed: …"</td></tr>
+</table>
+
+<h2>Live companion (browser frontend you run beside Bob)</h2>
+<p class="mut">Served by <code>make companion</code> on :7070. Holds the gateway bearer server-side and drives the proven <code>/rpc</code> path; click a scenario and watch the control plane respond. Screenshot below = all six scenarios run live against the gateway.</p>
+<img src="screenshots/companion.png" alt="FinByte Control-Plane Companion">
+
+<h2>Reproducible proof — <code>make verify-controls</code></h2>
+<pre id="verify">(see docs/screenshots/verify.txt)</pre>
+
+<h2>How to run it yourself</h2>
+<pre>git clone &lt;repo&gt;
+cp .env.example .env
+make up            # gateway + OPA + 4 MCP servers + 2 A2A agents (Python + Rust)
+make seed          # register everything + FinOps/Treasury virtual servers
+make verify-controls   # 16/16 — proves all four controls + cross-language A2A
+make companion     # browser companion on http://localhost:7070
+make bob-config    # emit .bob/mcp.json for IBM Bob</pre>
+
+<p class="mut">Gateway: ContextForge v1.0.2. Controls enforced at the gateway tool hooks (<code>tool_pre_invoke</code> / <code>tool_post_invoke</code>), including on bridged A2A agent calls. See <code>docs/ARCHITECTURE.md</code> and <code>docs/RUNBOOK.md</code>.</p>
+</div>
+<script>
+fetch('screenshots/verify.txt').then(r=>r.text()).then(t=>{document.getElementById('verify').textContent=t;}).catch(()=>{});
+</script>
+</body></html>

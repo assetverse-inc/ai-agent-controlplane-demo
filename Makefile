@@ -40,6 +40,12 @@ bob-config: ## Print the .bob/mcp.json to paste into IBM Bob (live FinOps UUID +
 	if [ -z "$$UUID" ]; then echo "FinOps server not found — run 'make seed' first" >&2; exit 1; fi; \
 	sed -e "s|REPLACE_FINOPS_UUID|$$UUID|" -e "s|REPLACE_BOB_TOKEN|$$BOB|" bob/mcp.json.template
 
+companion: ## Run the browser companion dashboard on :7070 (watch the control plane while using Bob)
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	UUID=$$(curl -s -H "Authorization: Bearer $$ADMIN" localhost:4444/servers | python3 -c "import sys,json;[print(s['id']) for s in json.load(sys.stdin) if isinstance(s,dict) and s.get('name')=='FinOps']" 2>/dev/null | head -1); \
+	echo "Companion → http://localhost:7070  (FinOps $$UUID)"; \
+	GATEWAY_TOKEN=$$ADMIN FINOPS_UUID=$$UUID uv run --with flask --with httpx python companion/app.py
+
 verify-controls: ## Run the money-shot proof suite (assert block/allow)
 	@bash scripts/money-shots/run-all.sh
 
