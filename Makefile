@@ -5,7 +5,7 @@ SECRET := demo-only-change-me-0123456789abcdef
 MINT := DATABASE_URL=sqlite:///./.tokmint.db uv run --with mcp-contextforge-gateway -- python -m mcpgateway.utils.create_jwt_token
 COMPOSE := docker compose
 
-.PHONY: help up up-full down seed token token-bob bob-config bob-install bob-config-operator bob-install-operator companion logs verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a fxrates-convert fxrates-reset
+.PHONY: help up up-full down seed token token-bob bob-config bob-install bob-config-operator bob-install-operator companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a fxrates-convert fxrates-reset
 
 help:
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n",$$1,$$2}'
@@ -122,8 +122,11 @@ demo-reset: ## Clean-reset the gateway to a known-good state (recreate + reseed)
 	@$(MAKE) seed
 	@echo "reset done — run 'make verify-controls' to confirm 16/16"
 
-logs: ## Tail gateway logs
+logs: ## Tail gateway logs (raw; blocked calls show as ERROR 'invocation failed')
 	$(COMPOSE) logs -f gateway
+
+logs-opa: ## Live, readable OPA policy decisions (ALLOW/DENY + args + reason)
+	@bash scripts/watch-decisions.sh
 
 ps: ## Show running services
 	$(COMPOSE) ps
