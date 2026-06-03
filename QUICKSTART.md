@@ -91,6 +91,7 @@ Swap back to the analyst with `make bob-install`.
 | Symptom | Fix |
 |---|---|
 | Anything drifts / 16/16 fails | `make demo-reset` → `make verify-controls` |
+| `make up` fails with a bind-mount error like `… config.yaml … Not a directory` | your clone is in a path Docker can't share (e.g. **`/tmp` on macOS**, a network/USB drive). Clone under your home dir (e.g. `~/projects/…`) and re-run `make quickstart` |
 | Bob lists no tools / "Disconnected" then connects | the FinOps/Operator UUID changes on reseed → re-run `make bob-install` (or `bob-install-operator`), restart Bob |
 | Bob *describes* a result instead of calling a tool | tell it to **use the finbyte-gateway tool**; verify via the monitor Logs (no log = it narrated) |
 | Want the automated walkthrough instead | `make demo` (stage-gated, pauses each step) |
