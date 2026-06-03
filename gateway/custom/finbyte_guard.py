@@ -12,6 +12,7 @@ Two hooks:
 Built on the same cpex.framework Plugin base the bundled plugins use.
 """
 import re
+import sys
 
 import httpx
 from cpex.framework import (
@@ -24,6 +25,14 @@ from cpex.framework import (
     ToolPreInvokePayload,
     ToolPreInvokeResult,
 )
+
+# Audit trail — every control action writes one readable line to the gateway's
+# stdout (captured by `docker compose logs` / `make logs`), so EVERY money shot
+# is checkable in the log, not just the policy block. We write to stdout directly
+# because the gateway's structured logger only emits its own mcpgateway.* records
+# and drops plain logging calls from plugins.
+def _audit(msg: str) -> None:
+    print(f"AUDIT {msg}", file=sys.stdout, flush=True)
 
 _SECRET = re.compile(r"sk-live-[A-Za-z0-9]+")
 _INJECT = [
@@ -78,6 +87,7 @@ class FinByteGuard(Plugin):
                 result = {"allow": False, "deny": [f"policy engine unavailable: {exc}"]}
             if not result.get("allow", False):
                 reason = "; ".join(result.get("deny") or ["denied by policy"])
+                _audit(f"[FinByteGuard] BLOCKED {payload.name} — {reason}")
                 violation = PluginViolation(
                     reason="Policy decision: DENY",
                     description=reason,
@@ -89,11 +99,25 @@ class FinByteGuard(Plugin):
                     modified_payload=payload,
                     violation=violation,
                 )
+            _audit(f"[FinByteGuard] ALLOWED {payload.name} — policy passed "
+                   f"(amount={args.get('amount')}, approval={args.get('approval')})")
         return ToolPreInvokeResult(modified_payload=payload)
 
     async def tool_post_invoke(
         self, payload: ToolPostInvokePayload, context: PluginContext
     ) -> ToolPostInvokeResult:
         if payload.result is not None:
+            # str() exposes the nested tool output (it's a CopyOnWriteDict that
+            # json.dumps would flatten); report WHICH controls fired, not counts
+            # (FastMCP duplicates text in content + structuredContent).
+            raw = str(payload.result)
+            what = []
+            if _SECRET.search(raw):
+                what.append("redacted API key")
+            if any(p.search(raw) for p in _INJECT):
+                what.append("neutralized injected instructions")
+            if what:
+                _audit(f"[FinByteGuard] sanitized {getattr(payload, 'name', '?')} "
+                       f"output — {'; '.join(what)}")
             payload = payload.model_copy(update={"result": _scrub(payload.result)})
         return ToolPostInvokeResult(modified_payload=payload)
