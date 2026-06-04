@@ -28,11 +28,7 @@ The whole stack is path-independent — config, plugins, and Rego policy are bak
 
 ## Architecture
 
-<p align="center">
-  <img src="docs/diagrams/architecture.svg" alt="Architecture diagram showing Bob, the ContextForge gateway, the OPA sidecar, six MCP servers, and two A2A agents on a private Docker network." width="900">
-</p>
-
-IBM Bob connects through the `mcpgateway.wrapper` stdio bridge to a **virtual server** on the gateway (a curated, least-privilege slice of the catalog). The gateway fronts five governed MCP servers, one deliberately-unregistered MCP server, and two A2A agents, with an OPA sidecar for policy decisions. Only the gateway and the two A2A agents publish ports to the host; the OPA sidecar and all MCP servers are reachable only on the Compose private network.
+_(See the diagram at the top.)_ IBM Bob connects through the `mcpgateway.wrapper` stdio bridge to a **virtual server** on the gateway (a curated, least-privilege slice of the catalog). The gateway fronts five governed MCP servers, one deliberately-unregistered MCP server, and two A2A agents, with an OPA sidecar for policy decisions. Only the gateway and the two A2A agents publish ports to the host; the OPA sidecar and all MCP servers are reachable only on the Compose private network.
 
 | Component | Kind | Port | Role |
 |---|---|---|---|
