@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" font-family="'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif">
+  <rect x="0" y="0" width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#525252"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="40" y="48" font-size="22" font-weight="700" fill="#161616">How every tool call is governed</text>
+  <text x="40" y="72" font-size="11.5" fill="#525252">The control plane sits in the gateway, between IBM Bob and the backend tools &#8212; not in either of them.</text>
+
+  <!-- ================= GATEWAY CONTAINER (dominant central node) ================= -->
+  <rect x="312" y="118" width="656" height="372" rx="10" fill="#161616" stroke="#000000" stroke-width="1.5"/>
+  <text x="640" y="146" font-size="15" font-weight="600" fill="#ffffff" text-anchor="middle">ContextForge Gateway &#8212; the control plane</text>
+  <text x="640" y="166" font-size="11.5" fill="#c6c6c6" text-anchor="middle">FinByteGuard + PIIFilterPlugin &#183; every call passes through here</text>
+
+  <!-- pre-invoke hook node (inside gateway) -->
+  <rect x="338" y="196" width="252" height="92" rx="10" fill="#fcf4d6" stroke="#f1c21b" stroke-width="1.5"/>
+  <text x="464" y="222" font-size="15" font-weight="600" fill="#161616" text-anchor="middle">HOOK: tool_pre_invoke</text>
+  <text x="464" y="244" font-size="11.5" fill="#525252" text-anchor="middle">query OPA policy engine</text>
+  <text x="464" y="262" font-size="11.5" fill="#525252" text-anchor="middle">deny &gt; $10k without dual approval</text>
+  <text x="464" y="280" font-size="11.5" fill="#525252" text-anchor="middle">(allow / block decision)</text>
+
+  <!-- OPA policy engine node (inside gateway) -->
+  <rect x="690" y="196" width="252" height="92" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+  <text x="816" y="222" font-size="15" font-weight="600" fill="#161616" text-anchor="middle">OPA policy engine</text>
+  <text x="816" y="244" font-size="11.5" fill="#525252" text-anchor="middle">openpolicyagent/opa :8181</text>
+  <text x="816" y="262" font-size="11.5" fill="#525252" text-anchor="middle">finops.rego &#183; package mcpgateway</text>
+  <text x="816" y="280" font-size="11.5" fill="#525252" text-anchor="middle">FinByte T&amp;E policy &#183; $10k cap</text>
+
+  <!-- pre-invoke <-> OPA link -->
+  <line x1="590" y1="232" x2="686" y2="232" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="690" y1="252" x2="594" y2="252" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="640" y="226" font-size="11" fill="#c6c6c6" text-anchor="middle">evaluate</text>
+  <text x="640" y="270" font-size="11" fill="#c6c6c6" text-anchor="middle">verdict</text>
+
+  <!-- post-invoke hook node (inside gateway) -->
+  <rect x="338" y="370" width="604" height="96" rx="10" fill="#fcf4d6" stroke="#f1c21b" stroke-width="1.5"/>
+  <text x="640" y="396" font-size="15" font-weight="600" fill="#161616" text-anchor="middle">HOOK: tool_post_invoke</text>
+  <text x="640" y="418" font-size="11.5" fill="#525252" text-anchor="middle">deep-redact PII / PCI + secrets (PIIFilterPlugin)</text>
+  <text x="640" y="436" font-size="11.5" fill="#525252" text-anchor="middle">neutralize prompt injection in tool output (FinByteGuard)</text>
+  <text x="640" y="454" font-size="11.5" fill="#525252" text-anchor="middle">response is sanitized before it ever reaches Bob</text>
+
+  <!-- ================= IBM Bob (left) ================= -->
+  <rect x="40" y="284" width="170" height="92" rx="10" fill="#0f62fe" stroke="#0043ce" stroke-width="1.5"/>
+  <text x="125" y="322" font-size="15" font-weight="600" fill="#ffffff" text-anchor="middle">IBM Bob</text>
+  <text x="125" y="342" font-size="11.5" fill="#d0e2ff" text-anchor="middle">AI agent / MCP client</text>
+  <text x="125" y="360" font-size="11.5" fill="#d0e2ff" text-anchor="middle">no controls live here</text>
+
+  <!-- mcpgateway.wrapper bridge -->
+  <rect x="40" y="404" width="170" height="62" rx="10" fill="#edf5ff" stroke="#4589ff" stroke-width="1.5"/>
+  <text x="125" y="430" font-size="13" font-weight="600" fill="#161616" text-anchor="middle">mcpgateway.wrapper</text>
+  <text x="125" y="450" font-size="11.5" fill="#525252" text-anchor="middle">stdio &#8594; SSE bridge</text>
+
+  <!-- Bob -> wrapper -->
+  <line x1="125" y1="376" x2="125" y2="400" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- wrapper -> gateway (request in) -->
+  <path d="M210,330 L274,330 L274,224 L334,224" fill="none" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="242" y="322" font-size="11" fill="#525252" text-anchor="middle">call request</text>
+
+  <!-- ================= Backend tools (right) ================= -->
+  <!-- MCP server -->
+  <rect x="1054" y="118" width="186" height="86" rx="10" fill="#d0e2ff" stroke="#4589ff" stroke-width="1.5"/>
+  <text x="1147" y="150" font-size="15" font-weight="600" fill="#161616" text-anchor="middle">Backend MCP tool</text>
+  <text x="1147" y="170" font-size="11.5" fill="#525252" text-anchor="middle">expense-db &#183; erp-payments</text>
+  <text x="1147" y="188" font-size="11.5" fill="#525252" text-anchor="middle">FastMCP &#183; Python</text>
+
+  <!-- A2A agent -->
+  <rect x="1054" y="222" width="186" height="86" rx="10" fill="#a7f0ba" stroke="#24a148" stroke-width="1.5"/>
+  <text x="1147" y="254" font-size="15" font-weight="600" fill="#161616" text-anchor="middle">Backend A2A tool</text>
+  <text x="1147" y="274" font-size="11.5" fill="#525252" text-anchor="middle">payments agent</text>
+  <text x="1147" y="292" font-size="11.5" fill="#525252" text-anchor="middle">Rust &#183; auditor (Python)</text>
+
+  <text x="1147" y="332" font-size="11.5" fill="#525252" text-anchor="middle">backends never see</text>
+  <text x="1147" y="350" font-size="11.5" fill="#525252" text-anchor="middle">a blocked or raw call</text>
+
+  <!-- pre-invoke -> backend (only if allowed) -->
+  <path d="M590,224 L1050,162" fill="none" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="820" y="178" font-size="11" fill="#525252" text-anchor="middle">if ALLOWED &#8594; invoke backend</text>
+
+  <!-- backend -> post-invoke (raw result) -->
+  <path d="M1147,308 L1147,418 L946,418" fill="none" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="1060" y="410" font-size="11" fill="#525252" text-anchor="middle">raw result</text>
+
+  <!-- post-invoke -> Bob (sanitized response back) -->
+  <path d="M338,418 L262,418 L262,358 L214,358" fill="none" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="278" y="392" font-size="11" fill="#525252" text-anchor="middle">sanitized response</text>
+
+  <!-- ================= Callout 1: pre-invoke DENY (blocked) ================= -->
+  <rect x="40" y="528" width="566" height="150" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+  <text x="60" y="556" font-size="15" font-weight="600" fill="#161616">Decision point @ tool_pre_invoke</text>
+  <text x="60" y="580" font-size="11.5" fill="#525252">A wire request is checked against the OPA policy before any money moves.</text>
+
+  <text x="60" y="612" font-size="13" font-weight="600" fill="#161616">Wire $50,000</text>
+  <text x="200" y="612" font-size="13" fill="#525252">&#8594;</text>
+  <rect x="224" y="596" width="92" height="26" rx="8" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+  <text x="270" y="613" font-size="12" font-weight="700" fill="#da1e28" text-anchor="middle">DENY</text>
+  <text x="328" y="612" font-size="11.5" fill="#525252">&gt; $10k cap, no dual approval &#8212; Plugin Violation</text>
+
+  <text x="60" y="648" font-size="11.5" fill="#525252">Cites FinByte T&amp;E policy (section 2). Same policy blocks the cross-language</text>
+  <text x="60" y="666" font-size="11.5" fill="#525252">Auditor &#8594; Payments $50k call at the bridged a2a-payments hook (mesh governance).</text>
+
+  <!-- ================= Callout 2: post-invoke REDACT (redacted) ================= -->
+  <rect x="638" y="528" width="602" height="150" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+  <text x="658" y="556" font-size="15" font-weight="600" fill="#161616">Decision point @ tool_post_invoke</text>
+  <text x="658" y="580" font-size="11.5" fill="#525252">A receipt with sensitive data is scrubbed before Bob ever sees it.</text>
+
+  <text x="658" y="612" font-size="13" font-weight="600" fill="#161616">receipt PII</text>
+  <text x="760" y="612" font-size="13" fill="#525252">&#8594;</text>
+  <rect x="784" y="596" width="108" height="26" rx="8" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+  <text x="838" y="613" font-size="12" font-weight="700" fill="#da1e28" text-anchor="middle">REDACTED</text>
+
+  <text x="658" y="644" font-size="11.5" fill="#525252">SSN &#8594; <tspan font-weight="600" fill="#161616">***-**-6789</tspan>&#160;&#183;&#160;card &#8594; <tspan font-weight="600" fill="#161616">****-****-****-1111</tspan></text>
+  <text x="658" y="664" font-size="11.5" fill="#525252">api key &#8594; <tspan font-weight="600" fill="#161616">[SECRET_REDACTED]</tspan>&#160;&#183;&#160;injection &#8594; <tspan font-weight="600" fill="#161616">[INJECTION_BLOCKED]</tspan></text>
+
+  <!-- callout leader lines -->
+  <path d="M323,508 L323,524" fill="none" stroke="#da1e28" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <path d="M939,508 L939,524" fill="none" stroke="#da1e28" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <line x1="464" y1="288" x2="323" y2="508" stroke="#da1e28" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <line x1="640" y1="466" x2="939" y2="508" stroke="#da1e28" stroke-width="1.5" stroke-dasharray="3,3"/>
+</svg>

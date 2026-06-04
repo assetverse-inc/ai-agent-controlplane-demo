@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1020" font-family="'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif">
+  <rect x="0" y="0" width="1180" height="1020" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#525252"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="28" y="52" fill="#161616" font-size="22" font-weight="700">Four controls, proven</text>
+  <text x="28" y="80" fill="#525252" font-size="13" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace">make verify-controls  &#8594;  16 passed, 0 failed</text>
+
+  <!-- Column headers -->
+  <text x="160" y="118" fill="#525252" font-size="11.5" text-anchor="middle">Bob's prompt</text>
+  <text x="590" y="118" fill="#525252" font-size="11.5" text-anchor="middle">Gateway control</text>
+  <text x="1010" y="118" fill="#525252" font-size="11.5" text-anchor="middle">Outcome</text>
+
+  <!-- ===================== PANEL 1: POLICY ===================== -->
+  <g>
+    <!-- badge -->
+    <circle cx="50" cy="178" r="15" fill="#161616" stroke="#000000" stroke-width="1.5"/>
+    <text x="50" y="183" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">1</text>
+    <text x="78" y="158" fill="#161616" font-size="15" font-weight="600">Policy</text>
+    <text x="78" y="176" fill="#525252" font-size="11.5">OPA wire-amount cap enforced at the gateway</text>
+
+    <!-- prompt node -->
+    <rect x="34" y="196" width="252" height="58" rx="10" fill="#0f62fe" stroke="#0043ce" stroke-width="1.5"/>
+    <text x="48" y="222" fill="#ffffff" font-size="13" font-weight="600">Bob:</text>
+    <text x="48" y="240" fill="#ffffff" font-size="12.5">"Wire $50,000 to Acme LLC"</text>
+
+    <!-- arrow -->
+    <line x1="286" y1="225" x2="468" y2="225" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="377" y="218" fill="#525252" font-size="11" text-anchor="middle">tool_pre_invoke</text>
+
+    <!-- control node -->
+    <rect x="470" y="196" width="240" height="58" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+    <text x="590" y="222" fill="#161616" font-size="13" font-weight="600" text-anchor="middle">OPA wire policy</text>
+    <text x="590" y="240" fill="#525252" font-size="11.5" text-anchor="middle">finops.rego &#183; package mcpgateway</text>
+
+    <!-- arrow -->
+    <line x1="710" y1="225" x2="892" y2="225" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- outcome node -->
+    <rect x="894" y="196" width="252" height="58" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+    <text x="1020" y="221" fill="#da1e28" font-size="14" font-weight="700" text-anchor="middle">BLOCKED</text>
+    <text x="1020" y="240" fill="#525252" font-size="11.5" text-anchor="middle">T&amp;E policy &#8594; $10k cap</text>
+
+    <!-- allowed note -->
+    <rect x="894" y="262" width="252" height="34" rx="8" fill="#defbe6" stroke="#24a148" stroke-width="1.5"/>
+    <text x="1020" y="283" fill="#24a148" font-size="11.5" text-anchor="middle">+ dual approval &#8594; ALLOWED</text>
+  </g>
+
+  <line x1="34" y1="320" x2="1146" y2="320" stroke="#e0e0e0" stroke-width="1"/>
+
+  <!-- ===================== PANEL 2: DATA PROTECTION ===================== -->
+  <g>
+    <circle cx="50" cy="392" r="15" fill="#161616" stroke="#000000" stroke-width="1.5"/>
+    <text x="50" y="397" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">2</text>
+    <text x="78" y="372" fill="#161616" font-size="15" font-weight="600">Data protection</text>
+    <text x="78" y="390" fill="#525252" font-size="11.5">PII / PCI + secrets masked before Bob sees them</text>
+
+    <rect x="34" y="410" width="252" height="58" rx="10" fill="#0f62fe" stroke="#0043ce" stroke-width="1.5"/>
+    <text x="48" y="436" fill="#ffffff" font-size="13" font-weight="600">Bob:</text>
+    <text x="48" y="454" fill="#ffffff" font-size="12.5">"Show receipt rcpt_pii"</text>
+
+    <line x1="286" y1="439" x2="468" y2="439" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="377" y="432" fill="#525252" font-size="11" text-anchor="middle">tool_post_invoke</text>
+
+    <rect x="470" y="410" width="240" height="58" rx="10" fill="#fcf4d6" stroke="#f1c21b" stroke-width="1.5"/>
+    <text x="590" y="436" fill="#161616" font-size="13" font-weight="600" text-anchor="middle">Post-invoke redaction</text>
+    <text x="590" y="454" fill="#525252" font-size="11.5" text-anchor="middle">PIIFilter + FinByteGuard scrub</text>
+
+    <line x1="710" y1="439" x2="892" y2="439" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <rect x="894" y="406" width="252" height="66" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+    <text x="908" y="426" fill="#161616" font-size="11" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace">SSN ***-**-6789</text>
+    <text x="908" y="443" fill="#161616" font-size="11" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace">card ****-****-****-1111</text>
+    <text x="908" y="460" fill="#161616" font-size="11" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace">key [SECRET_REDACTED]</text>
+  </g>
+
+  <line x1="34" y1="534" x2="1146" y2="534" stroke="#e0e0e0" stroke-width="1"/>
+
+  <!-- ===================== PANEL 3: PROMPT-INJECTION ===================== -->
+  <g>
+    <circle cx="50" cy="606" r="15" fill="#161616" stroke="#000000" stroke-width="1.5"/>
+    <text x="50" y="611" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">3</text>
+    <text x="78" y="586" fill="#161616" font-size="15" font-weight="600">Prompt-injection</text>
+    <text x="78" y="604" fill="#525252" font-size="11.5">Embedded "SYSTEM: ignore all prior policy..." neutralized</text>
+
+    <rect x="34" y="624" width="252" height="58" rx="10" fill="#0f62fe" stroke="#0043ce" stroke-width="1.5"/>
+    <text x="48" y="650" fill="#ffffff" font-size="13" font-weight="600">Bob:</text>
+    <text x="48" y="668" fill="#ffffff" font-size="12.5">"Fetch receipt rcpt_injection"</text>
+
+    <line x1="286" y1="653" x2="468" y2="653" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="377" y="646" fill="#525252" font-size="11" text-anchor="middle">tool_post_invoke</text>
+
+    <rect x="470" y="624" width="240" height="58" rx="10" fill="#fcf4d6" stroke="#f1c21b" stroke-width="1.5"/>
+    <text x="590" y="650" fill="#161616" font-size="13" font-weight="600" text-anchor="middle">Neutralized</text>
+    <text x="590" y="668" fill="#525252" font-size="11.5" text-anchor="middle">FinByteGuard injection regex</text>
+
+    <line x1="710" y1="653" x2="892" y2="653" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <rect x="894" y="624" width="252" height="58" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+    <text x="1020" y="658" fill="#da1e28" font-size="13" font-weight="700" text-anchor="middle" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace">[INJECTION_BLOCKED]</text>
+  </g>
+
+  <line x1="34" y1="748" x2="1146" y2="748" stroke="#e0e0e0" stroke-width="1"/>
+
+  <!-- ===================== PANEL 4: LEAST-PRIVILEGE ===================== -->
+  <g>
+    <circle cx="50" cy="820" r="15" fill="#161616" stroke="#000000" stroke-width="1.5"/>
+    <text x="50" y="825" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">4</text>
+    <text x="78" y="800" fill="#161616" font-size="15" font-weight="600">Least-privilege</text>
+    <text x="78" y="818" fill="#525252" font-size="11.5">FinOps analyst server exposes 8 tools &#8212; no wire among them</text>
+
+    <rect x="34" y="838" width="252" height="58" rx="10" fill="#0f62fe" stroke="#0043ce" stroke-width="1.5"/>
+    <text x="48" y="864" fill="#ffffff" font-size="13" font-weight="600">Bob:</text>
+    <text x="48" y="882" fill="#ffffff" font-size="12.5">"Wire $50k yourself, directly"</text>
+
+    <line x1="286" y1="867" x2="468" y2="867" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="377" y="860" fill="#525252" font-size="11" text-anchor="middle">RBAC scope</text>
+
+    <rect x="470" y="838" width="240" height="58" rx="10" fill="#d0e2ff" stroke="#4589ff" stroke-width="1.5"/>
+    <text x="590" y="864" fill="#161616" font-size="13" font-weight="600" text-anchor="middle">FinOps virtual server</text>
+    <text x="590" y="882" fill="#525252" font-size="11.5" text-anchor="middle">no wire tool registered</text>
+
+    <line x1="710" y1="867" x2="892" y2="867" stroke="#525252" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <rect x="894" y="838" width="252" height="58" rx="10" fill="#fff1f1" stroke="#da1e28" stroke-width="1.5"/>
+    <text x="1020" y="863" fill="#da1e28" font-size="14" font-weight="700" text-anchor="middle">can't</text>
+    <text x="1020" y="882" fill="#525252" font-size="11.5" text-anchor="middle">tool absent &#8212; nothing to call</text>
+  </g>
+
+  <!-- ===================== CROSS-LANGUAGE STRIP ===================== -->
+  <rect x="34" y="918" width="1112" height="44" rx="10" fill="#a7f0ba" stroke="#24a148" stroke-width="1.5"/>
+  <text x="54" y="940" fill="#161616" font-size="12.5" font-weight="600">Cross-language agent mesh:</text>
+  <text x="258" y="940" fill="#161616" font-size="12.5">Auditor (Python)  &#8594;  Payments (Rust)</text>
+  <text x="54" y="956" fill="#525252" font-size="11.5">same OPA policy blocks the $50k at the bridged a2a-payments hook &#8212; governance follows the call across runtimes.</text>
+
+  <!-- ===================== PERSONA LEGEND ===================== -->
+  <g>
+    <rect x="34" y="976" width="540" height="30" rx="8" fill="#edf5ff" stroke="#4589ff" stroke-width="1.5"/>
+    <text x="50" y="995" fill="#161616" font-size="11.5"><tspan font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace" fill="#0043ce">make bob</tspan> = FinOps analyst (Act 1)</text>
+    <rect x="586" y="976" width="560" height="30" rx="8" fill="#edf5ff" stroke="#4589ff" stroke-width="1.5"/>
+    <text x="602" y="995" fill="#161616" font-size="11.5"><tspan font-family="'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace" fill="#0043ce">make bob-operator</tspan> = platform operator (Act 2)</text>
+  </g>
+</svg>
