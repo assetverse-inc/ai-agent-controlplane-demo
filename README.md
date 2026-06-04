@@ -103,7 +103,7 @@ Swap back to the analyst at any time with `make bob`.
 | **Docker Desktop** (running) | Runs the gateway, OPA, MCP servers, and A2A agents | [docker.com](https://www.docker.com/products/docker-desktop/) — start it before you begin |
 | **uv** | Mints the gateway JWT **offline** (no network round-trip) | `https://docs.astral.sh/uv/` |
 | **IBM Bob Shell** (`bob`) | The AI agent you'll drive | macOS/Linux: `curl -fsSL https://bob.ibm.com/download/bobshell.sh \| bash` ([bob.ibm.com/download](https://bob.ibm.com/download)) |
-| **Node.js ≥ 18** (`npx`) | Runs the MCP Inspector | [nodejs.org](https://nodejs.org) |
+| **Node.js ≥ 22.15** | Required by IBM Bob Shell (it's a Node app); also runs the MCP Inspector (`npx`) | [nodejs.org](https://nodejs.org), or `nvm install 22` |
 
 > Budget **~5 GB** of free disk. On the first run, the pinned ContextForge image pulls once and the seven source images (six MCP servers + the Rust payments agent) build locally. Subsequent cold starts (`make down && make quickstart`) take roughly **~38 seconds** once images are cached.
 
