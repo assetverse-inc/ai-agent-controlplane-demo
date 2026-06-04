@@ -30,14 +30,21 @@ ADMIN_PW="${ADMIN_PW:-FinByteAdmin!2026}"
 # ── 1) preflight ─────────────────────────────────────────────────────────
 hd "1/5  Preflight — checking your laptop"
 miss=0
-chk(){ # cmd, why, install-hint
+chk(){ # REQUIRED: cmd, why, install-hint
   if command -v "$1" >/dev/null 2>&1; then ok "$1 — $($1 --version 2>/dev/null | head -1)";
   else no "$1 MISSING — $2  ${D}($3)${R}"; miss=1; fi
 }
+chkopt(){ # OPTIONAL (the stack + 16/16 proof run without it): cmd, why, note
+  if command -v "$1" >/dev/null 2>&1; then ok "$1 — $($1 --version 2>/dev/null | head -1)";
+  else printf "  ${YEL}!${R} %s not found — %s  ${D}(optional: %s)${R}\n" "$1" "$2" "$3"; fi
+}
 chk docker "runs the gateway + servers"        "install Docker Desktop and start it"
 chk uv     "mints the gateway JWT offline"      "https://docs.astral.sh/uv/"
-chk bob    "the AI agent you'll drive"          "install IBM Bob Shell (bobshell)"
-chk npx    "runs the MCP Inspector"             "comes with Node.js ≥18"
+# Bob and npx are only needed to DRIVE / inspect the demo — not to bring up the
+# stack or prove the controls. Keep them non-fatal so quickstart also works on a
+# headless box / Linux VM / CI (ends with 16/16; install Bob on a Mac to drive it).
+chkopt bob "the AI agent you'll drive"          "needed only to DRIVE Bob; the stack + 16/16 proof run without it"
+chkopt npx "runs the MCP Inspector"             "comes with Node.js ≥18; only for 'make inspect-mcp'"
 command -v curl >/dev/null 2>&1 || { no "curl MISSING"; miss=1; }
 command -v python3 >/dev/null 2>&1 || { no "python3 MISSING"; miss=1; }
 docker info >/dev/null 2>&1 || die "Docker daemon isn't responding — start Docker Desktop and re-run."
