@@ -1,5 +1,5 @@
-# LITE profile (attendee default): gateway (SQLite) + OPA + 4 MCP servers + 2 A2A agents.
-# Full profile (postgres/redis/nginx/phoenix) lives in docker-compose.full.yml.
+# The demo stack: gateway (SQLite) + OPA + 6 MCP servers + 2 A2A agents (10 services).
+# (A heavier Postgres/Redis/nginx/Phoenix-OTEL "full" profile is future work, not in this release.)
 name: ai-agent-controlplane-demo
 
 services:

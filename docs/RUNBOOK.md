@@ -57,7 +57,7 @@ Work down this ladder — the point is that **the demo can never fully fail, bec
 4. **The take-home repo + `QUICKSTART.md`** — attendees run it later on their own.
 
 ## On-stage run order (45 min)
-- **Architecture** (5 min): show `make ps` (8 services), `curl` both agent cards to prove Python vs Rust:
+- **Architecture** (5 min): show `make ps` (10 services), `curl` both agent cards to prove Python vs Rust:
   - Python Auditor: `docker compose exec auditor python -c "import urllib.request,json;print(json.load(urllib.request.urlopen('http://localhost:9001/.well-known/agent-card.json'))['name'])"`
   - Rust Payments serves the same well-known path on :3000 (advertised in its agent card).
 - **Baseline** (3 min): in Bob — *"Process expense exp_clean and reimburse it."* → succeeds.
@@ -76,7 +76,7 @@ Work down this ladder — the point is that **the demo can never fully fail, bec
 - **Q&A** (5 min).
 
 ## Reset between runs
-- `make demo-reset` — restarts the gateway + expense-db (clears rate-limit lockouts, restores fixtures).
+- `make demo-reset` — restarts the gateway + expense-db (restores fixtures).
 - Tokens expired? Just re-launch with `make bob` (tokens last 7 days; `make bob` mints a fresh one and rewrites `.bob/mcp.json` every time). The same refresh covers the UUID change after a reseed.
 
 ## Recovery
@@ -89,11 +89,9 @@ Work down this ladder — the point is that **the demo can never fully fail, bec
 | Docker build fails: "Could not resolve host" (cargo/pip/apt) but pulls work | fresh Docker Engine inherited a dead resolver — add `{"dns":["8.8.8.8","1.1.1.1"]}` to `/etc/docker/daemon.json`, `sudo systemctl restart docker`, re-run `make quickstart` (idempotent) |
 | `make seed` warns "tool not found" | backends still starting; wait 5s and re-run `make seed` (idempotent) |
 | Port 4444 in use | another gateway running: `make down`, or `pkill -f mcpgateway.main` (a host instance) |
-| OPA shot not blocking | `docker compose ps opa` up? `make demo-reset`; check `gateway/policies/finops.rego` mounted |
+| OPA shot not blocking | `docker compose ps opa` up (not crash-looping)? `make demo-reset`. The Rego is **baked into the opa image** (`gateway/Dockerfile.opa`, `COPY policies /policies`) — there's no host bind-mount to check |
 | Live Bob flaky | fall back to `make verify-controls` + the recorded captures |
 
 ## Notes
-- **Rate-limit live 429**: the limiter is enabled (in-memory). For a visible 429 on stage, lower
-  `TOOL_RATE_LIMIT` in `.env` (e.g. `15`) and recreate the gateway, then hammer a tool ~20×.
-- **Full profile** (`make up-full`) adds Phoenix for an OTEL trace of the governed call path.
 - **RBAC 403** (vs the least-privilege shown here) needs a bootstrapped non-admin role — out of scope for the lite demo.
+- **Not in this release:** rate limiting and a heavier Postgres/Redis/nginx/Phoenix-OTEL "full" profile. The demo ships one SQLite-backed lite stack; both are upstream-supported follow-ups if you want to add them.

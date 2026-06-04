@@ -5,10 +5,58 @@ SECRET := demo-only-change-me-0123456789abcdef
 MINT := DATABASE_URL=sqlite:///./.tokmint.db uv run --with mcp-contextforge-gateway -- python -m mcpgateway.utils.create_jwt_token
 COMPOSE := docker compose
 
-.PHONY: help up up-full down seed token token-bob bob bob-operator bob-config bob-install bob-config-operator bob-install-operator companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a fxrates-convert fxrates-reset
+.PHONY: help up down seed token token-bob bob bob-operator bob-config bob-install bob-config-operator bob-install-operator companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a fxrates-convert fxrates-reset
 
+# `make` (no target) prints this curated, categorized help. Keep it in sync when you
+# add/rename a target — the inline `## ...` comments still document each target too.
 help:
-	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n",$$1,$$2}'
+	@printf "\n\033[1mIBM Bob × ContextForge — the AI agent control plane\033[0m\n"
+	@printf "  make <target> — grouped below. New here? run \033[36mmake quickstart\033[0m first.\n"
+	@printf "\n\033[1m🚀 START HERE\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "quickstart" "ONE command: stack → seed → configure Bob → prove 16/16 + card"
+	@printf "  \033[36m%-22s\033[0m %s\n" "verify-controls" "Prove all four controls headlessly → \"16 passed, 0 failed\""
+	@printf "  \033[36m%-22s\033[0m %s\n" "demo" "Stage-gated end-to-end walkthrough (pauses at each stage)"
+	@printf "\n\033[1m🤖 DRIVE BOB\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bob" "Launch Bob — FinOps analyst (Act 1; cwd-proof, refreshes config)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bob-operator" "Launch Bob — platform operator (Act 2)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bob-install" "Write .bob/mcp.json for the analyst persona (no launch)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bob-install-operator" "Write .bob/mcp.json for the operator persona (no launch)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bob-config" "Print the analyst MCP config (to paste elsewhere)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bob-config-operator" "Print the operator MCP config"
+	@printf "\n\033[1m🛰  STACK\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "up" "Build + start the stack (gateway, OPA, 6 MCP servers, 2 A2A agents)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "down" "Stop the stack"
+	@printf "  \033[36m%-22s\033[0m %s\n" "seed" "Register servers/agents + build the FinOps/Treasury/Operator vservers"
+	@printf "  \033[36m%-22s\033[0m %s\n" "demo-reset" "Recreate + reseed the gateway to a known-good state"
+	@printf "  \033[36m%-22s\033[0m %s\n" "ps" "Show running services"
+	@printf "\n\033[1m👀 OBSERVE\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "monitor" "Open the ContextForge Admin UI (catalog + Logs)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "logs" "Tail gateway logs (control firings: AUDIT [FinByteGuard])"
+	@printf "  \033[36m%-22s\033[0m %s\n" "logs-opa" "Live, readable OPA decisions (ALLOW/DENY + reason)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "inspect-mcp" "MCP Inspector → the 8 governed tools (wire absent)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "inspect-a2a" "A2A Inspector → validate the Python + Rust agent cards"
+	@printf "  \033[36m%-22s\033[0m %s\n" "companion" "Browser evidence dashboard on :7070"
+	@printf "\n\033[1m🎬 SHOWCASE\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "fxrates-convert" "Apply the finished fx-rates (adds convert) + rebuild"
+	@printf "  \033[36m%-22s\033[0m %s\n" "fxrates-reset" "Restore base fx-rates so the \"Bob builds it\" beat repeats"
+	@printf "\n\033[1m🔑 TOKENS\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "token" "Print an admin JWT"
+	@printf "  \033[36m%-22s\033[0m %s\n" "token-bob" "Print Bob's JWT"
+	@printf "\n\033[1m✅ QUALITY / CI\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "check" "Aggregate CI gate (lint + bandit + compose-validate)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "format" "Auto-fix Python (ruff --fix + black)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "lint" "Lint Python (ruff + black --check)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "lint-rust" "fmt + clippy the Rust agent"
+	@printf "  \033[36m%-22s\033[0m %s\n" "test" "Run pytest"
+	@printf "  \033[36m%-22s\033[0m %s\n" "bandit" "Python source security scan"
+	@printf "  \033[36m%-22s\033[0m %s\n" "pip-audit" "Dependency CVE scan"
+	@printf "  \033[36m%-22s\033[0m %s\n" "secrets-baseline" "Secret scan (detect-secrets)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "sbom" "Generate CycloneDX SBOM"
+	@printf "  \033[36m%-22s\033[0m %s\n" "hadolint" "Lint Dockerfiles"
+	@printf "  \033[36m%-22s\033[0m %s\n" "compose-validate" "Validate docker-compose.yml"
+	@printf "  \033[36m%-22s\033[0m %s\n" "smoke" "Post-up gateway health probe"
+	@printf "  \033[36m%-22s\033[0m %s\n" "trivy" "Image CVE scan"
+	@printf "\n"
 
 .env:
 	cp .env.example .env
@@ -24,10 +72,6 @@ up: .env ## Build + start the lite stack
 	$(COMPOSE) --env-file .env.tokens up -d --build
 	@echo "waiting for gateway health..."; \
 	for i in $$(seq 1 40); do curl -sf localhost:4444/health >/dev/null 2>&1 && { echo "gateway healthy"; break; } || sleep 2; done
-
-up-full: .env ## Start the full presenter stack (postgres/redis/nginx/phoenix)
-	@echo "AUDITOR_TOKEN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET))" > .env.tokens
-	$(COMPOSE) --env-file .env.tokens -f docker-compose.yml -f docker-compose.full.yml up -d --build
 
 seed: ## Register servers/agents + build FinOps/Treasury virtual servers
 	@ADMIN_TOKEN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET)) \

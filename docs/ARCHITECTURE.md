@@ -43,9 +43,9 @@ plugin only does at the top level).
 |---|---|---|
 | gateway | ContextForge v1.0.2 (pinned digest) | control plane / MCP+A2A proxy |
 | opa | Open Policy Agent 0.70 | Rego policy decision point |
-| expense-db, erp-payments, policy-docs, notify | Python / FastMCP v3 | MCP tool servers |
+| expense-db, erp-payments, policy-docs, notify, controlplane, fx-rates | Python / FastMCP v3 | MCP tool servers (fx-rates ships unregistered, for the live-register beat) |
 | auditor | Python / `a2a-sdk` 1.1.0 | A2A agent: validates + delegates payment |
 | payments | Rust / `a2a-lf` 0.3 + `a2a-server-lf` 0.4 | A2A agent: executes payment |
 
-Lite profile = the above (SQLite, in-memory rate limit). Full profile adds Postgres, Redis,
-nginx, and Phoenix (OTEL).
+This release ships a single SQLite-backed profile (the table above). A heavier
+Postgres/Redis/nginx/Phoenix-OTEL profile is future work — not included here.
