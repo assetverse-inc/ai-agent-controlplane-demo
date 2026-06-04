@@ -232,3 +232,9 @@ ai-agent-controlplane-demo/
 ## Security / disclaimer
 
 **This is a demo, not production.** The JWTs are signed with a **public** demo secret (`demo-only-change-me-…`), CSRF is disabled for the local HTTP demo, and SSRF guards are loosened for the Compose private network. Do not reuse any of this configuration outside the demo. For production, mint your own secrets, enable HTTPS + CSRF, and tighten SSRF — see the upstream [IBM ContextForge](https://github.com/IBM/mcp-context-forge) project.
+
+---
+
+## License
+
+Released under the **MIT License** — see [`LICENSE`](LICENSE). The demo-only caveats above still apply: the bundled secrets and passwords are intentionally public and must not be reused in production.
