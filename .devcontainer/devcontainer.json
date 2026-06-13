@@ -1,0 +1,28 @@
+{
+  "name": "IBM Bob × ContextForge — control plane demo",
+  "//": "Opens this repo in a GitHub Codespace with Docker + toolchain preinstalled, so the WHOLE governed mesh runs in the cloud. Attendees then install ONLY IBM Bob locally and point it at the forwarded :4444 gateway (see 'make connect'). No local Docker/uv/make needed.",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" }
+  },
+  "//hostRequirements": "A MINIMUM floor. The mesh runs in ~2-3GB at rest. Set to 2-core/8gb so the cheapest (free-tier-friendly) Codespaces machine is AVAILABLE and the local Dev Containers extension doesn't warn on <16GB Docker. For a faster first build, just pick the 4-core/16gb machine in the Codespaces 'change machine type' menu — this floor doesn't cap it.",
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [4444, 7070, 8090, 6274],
+  "portsAttributes": {
+    "4444": { "label": "ContextForge gateway — point Bob here (make this Public)", "onAutoForward": "notify" },
+    "7070": { "label": "Companion dashboard" },
+    "8090": { "label": "A2A Inspector" },
+    "6274": { "label": "MCP Inspector" }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-azuretools.vscode-docker"]
+    }
+  }
+}

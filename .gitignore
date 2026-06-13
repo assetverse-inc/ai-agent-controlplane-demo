@@ -15,3 +15,8 @@ target/
 # PowerPoint lock/owner files
 slides/~$*
 docs/assets/cockpit-token.js
+
+# NOTE: Stage 1 has Bob WRITE mcp-servers/sales-tax/server.py live. Do NOT gitignore
+# it — Bob (IBM Bob Shell) honors .gitignore and will refuse to create an ignored
+# path. The file is generated (not committed); `make stage-reset` removes it so the
+# beat repeats clean, and `_solution.py` is the tracked fallback.

@@ -31,7 +31,7 @@ DOCKER_BUILDKIT ?= 0
 export DOCKER_HOST DOCKER_BUILDKIT
 endif
 
-.PHONY: help up down seed token token-bob bob bob-operator bob-config bob-install bob-config-operator bob-install-operator companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a cockpit cockpit-down fxrates-convert fxrates-reset
+.PHONY: help check clean up down seed token token-bob bob bob-operator bob-config bob-install bob-config-operator bob-install-operator connect companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a cockpit cockpit-down fxrates-convert fxrates-reset fxrates-register dev-start stage1-build stage1-scaffold stage2-govern stage3-controls stage4-mesh stage-reset
 
 # `make` (no target) prints this curated, categorized help. Keep it in sync when you
 # add/rename a target — the inline `## ...` comments still document each target too.
@@ -42,6 +42,13 @@ help:
 	@printf "  \033[36m%-22s\033[0m %s\n" "quickstart" "ONE command: stack → seed → configure Bob → prove 16/16 + card"
 	@printf "  \033[36m%-22s\033[0m %s\n" "verify-controls" "Prove all four controls headlessly → \"16 passed, 0 failed\""
 	@printf "  \033[36m%-22s\033[0m %s\n" "demo" "Stage-gated end-to-end walkthrough (pauses at each stage)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "check" "Verify ALL prerequisites are installed + live stack status"
+	@printf "\n\033[1m🎓 DEV DAY — PROGRESSIVE BUILD (bare tool → governed mesh)\033[0m\n"
+	@printf "  \033[36m%-22s\033[0m %s\n" "dev-start" "Open the prompt-card page (start here — copy-paste Bob prompts per stage)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "stage1-build" "Bob builds an MCP server from scratch → run RAW + inspect UNGOVERNED"
+	@printf "  \033[36m%-22s\033[0m %s\n" "stage2-govern" "Put that tool behind ContextForge (seed catalog + token + Bob registers it)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "stage3-controls" "Exercise the four controls (Bob's analyst queue + logs-opa)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "stage4-mesh" "The full governed picture (== quickstart end-state)"
 	@printf "\n\033[1m🤖 DRIVE BOB\033[0m\n"
 	@printf "  \033[36m%-22s\033[0m %s\n" "bob" "Launch Bob — FinOps analyst (Act 1; cwd-proof, refreshes config)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "bob-operator" "Launch Bob — platform operator (Act 2)"
@@ -49,12 +56,14 @@ help:
 	@printf "  \033[36m%-22s\033[0m %s\n" "bob-install-operator" "Write .bob/mcp.json for the operator persona (no launch)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "bob-config" "Print the analyst MCP config (to paste elsewhere)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "bob-config-operator" "Print the operator MCP config"
+	@printf "  \033[36m%-22s\033[0m %s\n" "connect" "Print the 1 command to point a REMOTE/LOCAL Bob at this gateway (Codespaces/BYOB)"
 	@printf "\n\033[1m🛰  STACK\033[0m\n"
 	@printf "  \033[36m%-22s\033[0m %s\n" "up" "Build + start the stack (gateway, OPA, 6 MCP servers, 2 A2A agents)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "down" "Stop the stack"
 	@printf "  \033[36m%-22s\033[0m %s\n" "seed" "Register servers/agents + build the FinOps/Treasury/Operator vservers"
 	@printf "  \033[36m%-22s\033[0m %s\n" "demo-reset" "Recreate + reseed the gateway to a known-good state"
 	@printf "  \033[36m%-22s\033[0m %s\n" "ps" "Show running services"
+	@printf "  \033[36m%-22s\033[0m %s\n" "clean" "Stop everything + remove generated/temp files (keeps images, .env, evidence)"
 	@printf "\n\033[1m👀 OBSERVE\033[0m\n"
 	@printf "  \033[36m%-22s\033[0m %s\n" "monitor" "Open the ContextForge Admin UI (catalog + Logs)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "logs" "Tail gateway logs (control firings: AUDIT [FinByteGuard])"
@@ -71,7 +80,7 @@ help:
 	@printf "  \033[36m%-22s\033[0m %s\n" "token" "Print an admin JWT"
 	@printf "  \033[36m%-22s\033[0m %s\n" "token-bob" "Print Bob's JWT"
 	@printf "\n\033[1m✅ QUALITY / CI\033[0m\n"
-	@printf "  \033[36m%-22s\033[0m %s\n" "check" "Aggregate CI gate (lint + bandit + compose-validate)"
+	@printf "  \033[36m%-22s\033[0m %s\n" "ci" "Aggregate CI gate (lint + bandit + compose-validate)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "format" "Auto-fix Python (ruff --fix + black)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "lint" "Lint Python (ruff + black --check)"
 	@printf "  \033[36m%-22s\033[0m %s\n" "lint-rust" "fmt + clippy the Rust agent"
@@ -88,6 +97,23 @@ help:
 
 .env:
 	cp .env.example .env
+
+check: ## Verify ALL prerequisites (required + optional) + live stack status; exits 1 if a required tool is missing
+	@bash scripts/check.sh
+
+# Stop every demo process and delete generated/ephemeral files so the next run
+# starts clean. KEEPS: built images (slow to rebuild), .env (your config), and
+# docs/evidence (the captured catalog). For a full wipe incl. the gateway DB
+# volume + images, the last line prints the one-shot command.
+clean: ## Stop everything + remove generated/temp files (keeps images, .env, evidence)
+	-@bash scripts/stages.sh reset >/dev/null 2>&1 || true
+	-@$(MAKE) -s cockpit-down >/dev/null 2>&1 || true
+	-@$(COMPOSE) down --remove-orphans >/dev/null 2>&1 || true
+	@rm -f .env.tokens .tokmint.db .bob/mcp.json docs/assets/cockpit-token.js 2>/dev/null || true
+	@rm -f /tmp/mcp-finops-*.json /tmp/mcp-raw-*.json /tmp/_qs_verify.out /tmp/finbyte-* /tmp/cockpit-* /tmp/stage1.* 2>/dev/null || true
+	@echo "✔ cleaned: stack stopped · generated/temp files removed · sales-tax/server.py dropped"
+	@echo "  kept: built images, .env, docs/evidence/"
+	@printf '  full wipe (also volumes + local images):  %s down -v --rmi local\n' "$(COMPOSE)"
 
 token: ## Print an admin JWT
 	@$(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET)
@@ -134,6 +160,9 @@ bob-install-operator: ## Write .bob/mcp.json for the OPERATOR persona (register 
 	echo "wrote .bob/mcp.json — platform OPERATOR persona (register/list/audit/evaluate). Restart Bob."; \
 	echo "Switch back to the analyst with: make bob-install"
 
+connect: ## Print the ONE 'bob mcp add' command for a LOCAL/REMOTE Bob to drive THIS gateway (no Docker/uv/make on the attendee's laptop). Set GATEWAY_URL=... for a VM, or run inside a Codespace for auto-detect.
+	@bash scripts/connect.sh
+
 # Launch Bob FROM THE REPO ROOT so it always reads THIS dir's .bob/mcp.json.
 # Running `bob` from the bob-personas/ subfolder (or any other dir) is the #1
 # "No MCP servers configured" trap — Bob looks for .bob/mcp.json relative to its
@@ -172,6 +201,41 @@ fxrates-reset: ## Restore the base fx-rates (no convert) so the 'Bob builds it' 
 	git checkout mcp-servers/fx-rates/server.py
 	$(COMPOSE) up -d --build fx-rates
 	@echo "fx-rates restored to base (get_fx_rate + list_currencies)"
+
+# ── Dev Day: progressive build (bare tool → governed mesh) ──────────────────
+# Scene-setters that walk a room up the stack one beat at a time, the inverse of
+# quickstart's "whole mesh at once". Each prints the exact Bob prompt + a
+# deterministic fallback; see scripts/stages.sh and docs/SHOWCASE-BOB.md.
+dev-start: ## Dev Day ⏵: open the progressive-build prompt-card page (docs/cockpit.html → 🎓 Progressive Build)
+	@url="file://$(CURDIR)/docs/cockpit.html#build"; \
+	echo "▶ Opening the Dev Day prompt-card → docs/cockpit.html (🎓 Progressive Build tab)"; \
+	echo "  copy each stage's Bob prompt straight from the page."; \
+	(open "$$url" 2>/dev/null || xdg-open "$$url" 2>/dev/null \
+	  || echo "  (no browser opener — open docs/cockpit.html yourself and click 🎓 Progressive Build)"); \
+	echo; echo "  Then walk the stages:  make stage1-build → stage2-govern → stage3-controls → stage4-mesh"
+
+stage1-build: ## Dev Day ①: Bob builds an MCP server from scratch → run RAW + inspect UNGOVERNED (:8000)
+	@bash scripts/stages.sh build
+stage1-scaffold: ## Dev Day ① fallback: drop in the finished sales-tax server if Bob's live build wobbles
+	@cp mcp-servers/sales-tax/_solution.py mcp-servers/sales-tax/server.py && \
+	echo "wrote mcp-servers/sales-tax/server.py from _solution.py — now run 'make stage1-build'"
+stage2-govern: ## Dev Day ②: put that tool behind ContextForge (catalog + token)
+	@bash scripts/stages.sh govern
+stage3-controls: ## Dev Day ③: seed the mesh → the four controls start biting
+	@bash scripts/stages.sh controls
+stage4-mesh: ## Dev Day ④: the full governed mesh (== quickstart end-state)
+	@bash scripts/stages.sh mesh
+stage-reset: ## Stop the bare Stage-1 fx-rates server (if running)
+	@bash scripts/stages.sh reset
+
+fxrates-register: ## (Stage 2 fallback) register fx-rates into the gateway via API, as Bob's operator would
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	code=$$(curl -s -o /tmp/_fxreg.out -w '%{http_code}' -X POST localhost:4444/gateways \
+	  -H "Authorization: Bearer $$ADMIN" -H 'Content-Type: application/json' \
+	  -d '{"name":"fx-rates","url":"http://fx-rates:8000/mcp","transport":"STREAMABLEHTTP","description":"fx-rates MCP server"}'); \
+	if [ "$$code" = "200" ] || [ "$$code" = "201" ]; then echo "✓ fx-rates registered into ContextForge (HTTP $$code)"; \
+	elif grep -qi 'already\|exists\|conflict\|duplicate' /tmp/_fxreg.out 2>/dev/null; then echo "✓ fx-rates already registered"; \
+	else echo "registration returned HTTP $$code: $$(cat /tmp/_fxreg.out 2>/dev/null)"; fi
 
 monitor: ## Open the ContextForge monitor (Admin UI: catalog + observability + logs)
 	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
@@ -276,7 +340,7 @@ down: ## Stop the stack
 # ── Quality / security / CI (adapted from IBM/mcp-context-forge v1.0.2) ──
 # Divergence notes: upstream uses detect-secrets (not gitleaks) and osv-scan/dockle
 # (not trivy). `secrets-baseline`/`trivy` reflect that; pick what fits before publishing.
-.PHONY: format lint lint-rust test bandit pip-audit secrets-baseline sbom hadolint compose-validate smoke trivy check
+.PHONY: format lint lint-rust test bandit pip-audit secrets-baseline sbom hadolint compose-validate smoke trivy ci
 PY_DIRS := mcp-servers a2a-agents/auditor companion gateway/seed scripts
 IMAGES  ?= ai-agent-controlplane-demo-auditor ai-agent-controlplane-demo-payments
 
@@ -304,5 +368,5 @@ smoke: ## Post-up gateway health probe
 	@curl -sf localhost:4444/health && echo OK || exit 1
 trivy: ## Image CVE scan (divergence: upstream uses osv/dockle)
 	@for i in $(IMAGES); do trivy image --severity HIGH,CRITICAL --ignore-unfixed $$i || true; done
-check: lint bandit compose-validate ## Aggregate gate for CI
-	@echo "check passed"
+ci: lint bandit compose-validate ## Aggregate gate for CI (lint + bandit + compose-validate)
+	@echo "ci checks passed"

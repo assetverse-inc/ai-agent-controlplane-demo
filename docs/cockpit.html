@@ -46,6 +46,46 @@
   nav.toc a{color:var(--muted);font-size:13.5px;font-weight:600;padding:6px 10px;border-radius:8px}
   nav.toc a:hover{background:var(--code-bg);color:var(--ink);text-decoration:none}
 
+  /* mode toggle (Progressive Build ⇄ Cockpit) */
+  nav.toc .wrap{flex-direction:column;align-items:stretch;gap:8px}
+  .modes{display:flex;gap:6px}
+  .mode{font:inherit;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line);
+    background:#fff;color:var(--muted);padding:7px 14px;border-radius:999px;line-height:1.3}
+  .mode:hover{border-color:var(--ibm);color:var(--ibm)}
+  .mode.active{background:var(--ibm);border-color:var(--ibm);color:#fff}
+  .toclinks{display:flex;gap:4px;flex-wrap:wrap}
+  body.view-build .toclinks{display:none}
+
+  /* the two top-level views */
+  .view{display:none}
+  .view.active{display:block}
+
+  /* stage cards (build view) */
+  .stage{border-left:4px solid var(--ibm)}
+  .stagenum{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;
+    background:var(--ibm);color:#fff;font-size:14px;font-weight:700;flex:none}
+  .saybob{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ibm-dark);margin:14px 0 2px}
+  .runlabel{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 2px}
+
+  /* collapsible sections (build view twisties) */
+  details.twisty{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ibm);
+    border-radius:var(--radius);box-shadow:var(--shadow);margin:0 0 14px;overflow:hidden}
+  details.twisty>summary{cursor:pointer;list-style:none;padding:15px 20px;font-size:18px;font-weight:600;
+    display:flex;align-items:center;gap:10px;user-select:none}
+  details.twisty>summary::-webkit-details-marker{display:none}
+  details.twisty>summary::before{content:'▸';color:var(--muted);font-size:13px;flex:none;width:14px}
+  details.twisty[open]>summary::before{content:'▾'}
+  details.twisty>summary:hover{background:#fafafc}
+  details.twisty[open]>summary{border-bottom:1px solid var(--line)}
+  details.twisty>summary .pill{margin-left:auto}
+  .twisty-body{padding:16px 20px 20px}
+  .twisty-body>*:first-child{margin-top:0}
+  .twisty-body img{display:block;width:100%;height:auto;border-radius:9px;border:1px solid var(--line)}
+  .controls-row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+  .controls-row button{font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);
+    background:#fff;color:var(--muted);padding:5px 12px;border-radius:999px}
+  .controls-row button:hover{border-color:var(--ibm);color:var(--ibm)}
+
   main{padding:36px 0 64px}
   section{margin:0 0 40px}
   h2{font-size:23px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
@@ -135,26 +175,132 @@
     <div class="eyebrow">IBM Bob × ContextForge · Control Plane Demo</div>
     <h1>Who's in charge of your agents?</h1>
     <p class="tag">One AI agent, a fintech agent mesh, and a gateway that governs every move.</p>
-    <div class="status"><span class="dot"></span>The cockpit is running — here's how to drive it</div>
+    <div class="status"><span class="dot"></span><span id="statustext">The cockpit is running — here's how to drive it</span></div>
   </div>
 </header>
 
 <nav class="toc">
   <div class="wrap">
-    <a href="#arch">Architecture</a>
-    <a href="#start">60-second start</a>
-    <a href="#cockpit">Your cockpit</a>
-    <a href="#surfaces">Demo surfaces</a>
-    <a href="#controls">The four controls</a>
-    <a href="#bob">Drive Bob</a>
-    <a href="#prove">Prove it</a>
-    <a href="#trouble">Troubleshooting</a>
-    <a href="#teardown">Teardown</a>
+    <div class="modes">
+      <button class="mode" data-view="build">🎓 Progressive Build</button>
+      <button class="mode" data-view="cockpit">🛰 Cockpit</button>
+    </div>
+    <div class="toclinks">
+      <a href="#arch">Architecture</a>
+      <a href="#start">60-second start</a>
+      <a href="#cockpit">Your cockpit</a>
+      <a href="#surfaces">Demo surfaces</a>
+      <a href="#controls">The four controls</a>
+      <a href="#bob">Drive Bob</a>
+      <a href="#prove">Prove it</a>
+      <a href="#trouble">Troubleshooting</a>
+      <a href="#teardown">Teardown</a>
+    </div>
   </div>
 </nav>
 
 <main>
 <div class="wrap">
+
+  <!-- ════════════════ PROGRESSIVE BUILD VIEW (Dev Day) ════════════════ -->
+  <div id="view-build" class="view">
+
+    <section>
+      <h2 style="margin-bottom:8px">Build it live — bare tool → governed mesh</h2>
+      <p class="lede">Four stages. At each one <b>you prompt IBM Bob</b> to do the real work — build the server, register it, drive the controls — while <code class="inline">make</code> handles the plumbing. Copy the prompts straight from here into Bob. Every stage has a one-command fallback so a wobbly live edit never stalls the room.</p>
+      <div class="note">This is the <b>live-talk</b> path. The all-at-once solo path is <code class="inline">make quickstart</code>; the watch-everything window is the <b>🛰 Cockpit</b> tab.</div>
+      <div class="controls-row">
+        <button onclick="document.querySelectorAll('#view-build details.twisty').forEach(function(d){d.open=true})">⊞ Expand all</button>
+        <button onclick="document.querySelectorAll('#view-build details.twisty').forEach(function(d){d.open=false})">⊟ Collapse all</button>
+      </div>
+    </section>
+
+    <details class="twisty" open>
+      <summary>Architecture at a glance</summary>
+      <div class="twisty-body">
+        <p class="lede" style="margin-top:0">IBM Bob drives a fintech (&ldquo;FinByte&rdquo;) agent mesh, but it never touches the backends directly. Every tool call <em>and</em> every agent-to-agent call flows through <b>IBM ContextForge</b> — the one governed seam that authenticates, authorizes, redacts, and audits <em>before</em> Bob sees a result and <em>before</em> any money moves. An OPA sidecar decides policy; the four controls are enforced right here.</p>
+        <img src="diagrams/architecture.svg" alt="Reference architecture: IBM Bob connects through ContextForge with an OPA sidecar to six MCP servers and two cross-language A2A agents; the gateway governs every call.">
+      </div>
+    </details>
+
+    <details class="twisty" open>
+      <summary><span class="stagenum">1</span> Bob builds an MCP server <em>from scratch</em> <span class="pill port">ungoverned · :8000</span></summary>
+      <div class="twisty-body">
+        <p>The starting point every developer knows: a plain MCP server on your laptop. No gateway, no policy, no auth — whoever reaches the port runs any tool. <b>That exposure is the problem Stage 2 solves.</b></p>
+        <div class="saybob">① Tell Bob to build it</div>
+        <div class="cmd">Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.<button class="copy" data-copy="Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.">copy</button></div>
+        <div class="runlabel">② Serve it bare + open the Inspector</div>
+        <div class="cmd">make stage1-build<button class="copy" data-copy="make stage1-build">copy</button></div>
+        <p style="margin-bottom:0">The MCP Inspector opens with <b>no token field</b> — connect (Via Proxy) and call <code class="inline">add_tax</code> yourself. Anyone on the network could. No redaction, no policy, no audit.</p>
+        <div class="warnbox"><b>Fallback</b> if Bob's file won't run: <code class="inline">make stage1-scaffold</code> drops in a known-good <code class="inline">sales-tax</code> server, then re-run <code class="inline">make stage1-build</code>.</div>
+      </div>
+    </details>
+
+    <details class="twisty" open>
+      <summary><span class="stagenum">2</span> Put a tool behind ContextForge <span class="pill port">governed · :4444</span></summary>
+      <div class="twisty-body">
+        <p>Building is easy; <b>governing</b> is the hard part ContextForge solves. Take <code class="inline">fx-rates</code> — a service already running in the mesh — and have Bob onboard it. Now it's in the catalog and reachable only through the one seam, with a token.</p>
+        <div class="runlabel">① Bring up the stack + seed it (operator persona)</div>
+        <div class="cmd">make stage2-govern<button class="copy" data-copy="make stage2-govern">copy</button></div>
+        <div class="saybob">② Tell Bob (operator) to onboard + use it</div>
+        <div class="cmd">Register the fx-rates service at http://fx-rates:8000/mcp.<button class="copy" data-copy="Register the fx-rates service at http://fx-rates:8000/mcp.">copy</button></div>
+        <div class="cmd">List everything ContextForge is governing.<button class="copy" data-copy="List everything ContextForge is governing.">copy</button></div>
+        <p style="margin-bottom:0"><b>The contrast to land:</b> Stage 1 was wide open on <code class="inline">:8000</code>; now every call goes through <code class="inline">:4444</code> — catalog + token required. Watch it appear in the <a href="http://localhost:4444/admin" target="_blank">Admin UI</a> (<code class="inline">make monitor</code>).</p>
+        <div class="note">fx-rates now lands in the catalog (token-gated), but Bob can't <em>call</em> it yet — exposing a governed tool to an agent is a further grant (add it to a virtual server). That gate <em>is</em> the least-privilege control.</div>
+        <div class="warnbox"><b>Fallback</b> if Bob's registration wobbles: <code class="inline">make fxrates-register</code>.</div>
+      </div>
+    </details>
+
+    <details class="twisty" open>
+      <summary><span class="stagenum">3</span> Turn the four controls on <span class="pill rec">the gasp</span></summary>
+      <div class="twisty-body">
+        <p>Being in the catalog buys auth + one seam. The <em>interesting</em> controls live in the FinOps mesh — watch each one bite a real call Bob makes.</p>
+        <div class="runlabel">① Seed the FinOps mesh + analyst persona</div>
+        <div class="cmd">make stage3-controls<button class="copy" data-copy="make stage3-controls">copy</button></div>
+        <div class="runlabel">② Open the live decision stream (second pane)</div>
+        <div class="cmd">make logs-opa<button class="copy" data-copy="make logs-opa">copy</button></div>
+        <div class="saybob">③ Tell Bob (analyst) — one prompt hits all four</div>
+        <div class="cmd">Process today's pending expenses end to end. For each: read it, check its receipt, approve and reimburse anything clean, and flag anything that needs a wire.<button class="copy" data-copy="Process today's pending expenses end to end. For each: read it, check its receipt, approve and reimburse anything clean, and flag anything that needs a wire.">copy</button></div>
+        <table style="margin-top:10px">
+          <thead><tr><th>Expense</th><th>Control that fires</th></tr></thead>
+          <tbody>
+            <tr><td><code class="inline">exp_pii</code></td><td><span class="verdict v-mask">REDACTED</span> SSN/card/key → <code class="inline">***-**-6789</code>, <code class="inline">[SECRET_REDACTED]</code></td></tr>
+            <tr><td><code class="inline">exp_injection</code></td><td><span class="verdict v-block">NEUTRALIZED</span> embedded instruction → <code class="inline">[INJECTION_BLOCKED]</code></td></tr>
+            <tr><td><code class="inline">exp_big</code> ($50k)</td><td><span class="verdict v-block">BLOCKED</span> by OPA — cross-language Python→Rust wire over the cap</td></tr>
+            <tr><td>(Bob itself)</td><td>has <b>no wire tool</b> — least-privilege / RBAC</td></tr>
+          </tbody>
+        </table>
+        <div class="warnbox"><b>Fallback / proof</b> any time, no Bob needed: <code class="inline">make verify-controls</code> → <b style="color:var(--ok)">16 passed, 0 failed</b>.</div>
+      </div>
+    </details>
+
+    <details class="twisty" open>
+      <summary><span class="stagenum">4</span> The full governed mesh <span class="pill rec">== quickstart</span></summary>
+      <div class="twisty-body">
+        <p>This is where <code class="inline">make quickstart</code> would have dropped you in one shot — but the room watched it get built. Prove the whole thing, then pick a cockpit.</p>
+        <div class="runlabel">① Prove it end-to-end</div>
+        <div class="cmd">make stage4-mesh<button class="copy" data-copy="make stage4-mesh">copy</button></div>
+        <div class="runlabel">② Drive it from here</div>
+        <div class="cmd">make cockpit            <span style="color:var(--muted)"># tmux: Bob + logs + OPA + both inspectors</span><button class="copy" data-copy="make cockpit">copy</button></div>
+        <div class="cmd">make companion          <span style="color:var(--muted)"># browser evidence dashboard → :7070</span><button class="copy" data-copy="make companion">copy</button></div>
+        <div class="cmd">make bob-operator       <span style="color:var(--muted)"># Act 2 — Bob operates the control plane</span><button class="copy" data-copy="make bob-operator">copy</button></div>
+        <p style="margin-bottom:0">Switch to the <b>🛰 Cockpit</b> tab above for the full driving guide.</p>
+      </div>
+    </details>
+
+    <details class="twisty">
+      <summary>↺ Reset / repeat the beat</summary>
+      <div class="twisty-body">
+        <div class="cmd">make stage-reset        <span style="color:var(--muted)"># stop Bob's bare server + delete the generated server.py</span><button class="copy" data-copy="make stage-reset">copy</button></div>
+        <div class="cmd">make demo-reset         <span style="color:var(--muted)"># recreate + reseed the gateway to known-good</span><button class="copy" data-copy="make demo-reset">copy</button></div>
+        <div class="cmd">make fxrates-reset      <span style="color:var(--muted)"># restore base fx-rates (repeat the onboard beat)</span><button class="copy" data-copy="make fxrates-reset">copy</button></div>
+      </div>
+    </details>
+
+  </div><!-- /view-build -->
+
+  <!-- ════════════════ COCKPIT VIEW (drive the running stack) ════════════════ -->
+  <div id="view-cockpit" class="view">
 
   <!-- 0 -->
   <section id="arch">
@@ -332,6 +478,8 @@
     </div>
   </section>
 
+  </div><!-- /view-cockpit -->
+
 </div>
 </main>
 
@@ -346,6 +494,32 @@
 <!-- make cockpit writes assets/cockpit-token.js (gitignored) with this session's token -->
 <script src="assets/cockpit-token.js" onerror="void 0"></script>
 <script>
+  // ── view switcher: 🎓 Progressive Build ⇄ 🛰 Cockpit ──────────────────────
+  // Default to Cockpit (so `make cockpit` opening this page is unchanged); land
+  // on the build prompt-card when opened with #build (the stageN targets do this).
+  (function(){
+    var STATUS={build:"Progressive build — prompt Bob through each stage",
+                cockpit:"The cockpit is running — here's how to drive it"};
+    function setView(v){
+      if(v!=='build'&&v!=='cockpit') v='cockpit';
+      document.querySelectorAll('.view').forEach(function(el){el.classList.toggle('active', el.id==='view-'+v);});
+      document.querySelectorAll('.mode').forEach(function(b){b.classList.toggle('active', b.getAttribute('data-view')===v);});
+      document.body.className='view-'+v;
+      var st=document.getElementById('statustext'); if(st) st.textContent=STATUS[v];
+      try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; }
+    }
+    document.querySelectorAll('.mode').forEach(function(b){
+      b.addEventListener('click',function(){setView(b.getAttribute('data-view'));window.scrollTo(0,0);});
+    });
+    function viewFromHash(){ return location.hash.replace('#','')==='build' ? 'build' : 'cockpit'; }
+    // Re-sync when the hash changes — e.g. `make dev-start` opens #build in a tab
+    // that's ALREADY showing Cockpit; without this the fragment changes but the
+    // view wouldn't re-render. Also covers bfcache restores (pageshow).
+    window.addEventListener('hashchange', function(){ setView(viewFromHash()); window.scrollTo(0,0); });
+    window.addEventListener('pageshow', function(){ setView(viewFromHash()); });
+    setView(viewFromHash());
+  })();
+
   // If make cockpit stamped a token, show it (copyable) in the MCP Inspector card.
   (function(){
     if(window.COCKPIT_TOKEN){

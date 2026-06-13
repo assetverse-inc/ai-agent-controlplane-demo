@@ -161,8 +161,11 @@ open_howto(){
   Surfaces: Companion :7070 · Admin UI :4444/admin · MCP Inspector :${MCP_INSPECTOR_PORT} · A2A Inspector :${A2A_INSPECTOR_PORT}
 EOF
   else
-    echo "  Opening the HOW-TO guide → docs/cockpit.html"
-    (open "$HOWTO" 2>/dev/null || xdg-open "$HOWTO" 2>/dev/null || true)
+    echo "  Opening the HOW-TO guide → docs/cockpit.html (Cockpit view)"
+    # Use a file:// URL with the #cockpit fragment so an already-open tab (maybe on
+    # the #build view from `make dev-start`) re-renders to the Cockpit view. A bare
+    # path would let `open` treat '#cockpit' as part of the filename.
+    (open "file://$HOWTO#cockpit" 2>/dev/null || xdg-open "file://$HOWTO#cockpit" 2>/dev/null || true)
   fi
 }
 

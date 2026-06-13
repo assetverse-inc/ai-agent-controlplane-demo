@@ -7,6 +7,29 @@ visible the instant it acts. All verified live (IBM Bob v1.0.4 + this stack).
 
 ---
 
+## Dev Day track — the progressive build (`make stage1-build` … `stage4-mesh`)
+
+For a **developer** audience the most compelling path is *bottom-up*: start with a
+bare tool they recognise, then watch ContextForge earn its place one layer at a
+time. That's the inverse of `make quickstart` (which drops you into the finished
+mesh). Four scene-setting targets walk the room up the stack — each prepares
+state, opens the right window, prints the exact line to type at Bob, and ships a
+deterministic fallback so a wobbly live edit never strands the talk:
+
+| Stage | Command | The beat | Bob does | Fallback |
+|---|---|---|---|---|
+| ① Build | `make stage1-build` | Bob writes a **brand-new MCP server from scratch** (`mcp-servers/sales-tax/server.py`), run bare on `:8000` — **no gateway, no policy, no auth**. The Inspector opens with *no token field*: anyone calls anything. "This works — and that's the problem." | creates the `sales-tax` server live; re-run to serve + inspect it | `make stage1-scaffold` |
+| ② Govern | `make stage2-govern` | A real mesh service, now **in the catalog + reachable only through `:4444` with a token** (Bob onboards it). It lands governed but **not yet callable** by Bob — granting it to an agent is a further least-privilege step. (Brings up the stack and seeds the catalog so Bob's operator tools exist; fx-rates stays unregistered for Bob to onboard live.) | `Register the fx-rates service at http://fx-rates:8000/mcp.` | `make fxrates-register` |
+| ③ Controls | `make stage3-controls` | The four controls **bite a real call** — run the Beat 1 queue prompt as the analyst; watch `make logs-opa`. | the batch prompt below | `make verify-controls` → 16/16 |
+| ④ Mesh | `make stage4-mesh` | The full governed picture — **== the `quickstart` end-state**, but the room watched it get built. Hands off to `make cockpit` / `companion`. | drive Act 1 / Act 2 | — |
+
+The individual beats below are the *content* of stages ①–③; the stage targets just
+sequence and narrate them. `make stage-reset` stops the bare Stage-1 server if you
+need to bail out. Use this track for the live talk; use `make quickstart` to get an
+attendee from zero to the finished stack on their own laptop.
+
+---
+
 ## Stage setup — two panes, cause → effect
 
 Arrange your screen so the room sees the agent and the control plane at once:

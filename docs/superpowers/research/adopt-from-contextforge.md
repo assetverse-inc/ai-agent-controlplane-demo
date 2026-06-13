@@ -82,7 +82,7 @@ Sources: `/tmp/cf-repo/.github/workflows/lint.yml`, `/tmp/cf-repo/.github/workfl
 | Upstream workflows (of the 23) | → Our workflow | Job(s) |
 |---|---|---|
 | `lint.yml`, `pytest.yml`, `rust.yml` | `.github/workflows/ci.yml` | `lint` (ruff/black), `test` (pytest), `rust` (fmt/clippy) |
-| `security`/`bandit`/`pip-audit`/secret-scan/`sbom` | `.github/workflows/security.yml` | `make check` minus compose + `sbom` |
+| `security`/`bandit`/`pip-audit`/secret-scan/`sbom` | `.github/workflows/security.yml` | `make ci` minus compose + `sbom` |
 | `docker`/compose/image-scan | `.github/workflows/docker.yml` | build images, `compose-validate`, `smoke`, image CVE scan |
 
 ```yaml

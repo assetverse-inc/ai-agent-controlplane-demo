@@ -123,7 +123,7 @@ Manual (interactive tooling):
 9. **Over SSH** → no false "tab opened"; prints URLs + the `ssh -L` port-forward line.
 10. **`COCKPIT_PERSONA=operator`** → Bob pane runs the operator persona.
 
-The change is additive (new script + `cockpit`/`cockpit-down` targets + a one-line `inspect-a2a` flag + a doc note); it touches no existing target's behavior except adding a host alias to `inspect-a2a`, so the CI gate (`make check`) is unaffected.
+The change is additive (new script + `cockpit`/`cockpit-down` targets + a one-line `inspect-a2a` flag + a doc note); it touches no existing target's behavior except adding a host alias to `inspect-a2a`, so the CI gate (`make ci`) is unaffected.
 
 ## Open question for the implementer
 
