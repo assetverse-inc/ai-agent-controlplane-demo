@@ -31,7 +31,7 @@ DOCKER_BUILDKIT ?= 0
 export DOCKER_HOST DOCKER_BUILDKIT
 endif
 
-.PHONY: help check clean up down seed token token-bob bob bob-operator bob-config bob-install bob-config-operator bob-install-operator connect companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a cockpit cockpit-down fxrates-convert fxrates-reset fxrates-register dev-start stage1-build stage1-scaffold stage2-govern stage3-controls stage4-mesh stage-reset
+.PHONY: help check clean up down seed token token-bob bob bob-operator bob-config bob-install bob-config-operator bob-install-operator bob-config-builder bob-install-builder connect companion logs logs-opa verify-controls demo-reset ps demo quickstart monitor inspect-mcp inspect-a2a cockpit cockpit-down fxrates-convert fxrates-reset fxrates-register dev-start stage1-build stage1-scaffold stage2-govern stage3-controls stage4-mesh stage-reset salestax-up salestax-down salestax-register salestax-grant fxrates-extend
 
 # `make` (no target) prints this curated, categorized help. Keep it in sync when you
 # add/rename a target — the inline `## ...` comments still document each target too.
@@ -160,6 +160,18 @@ bob-install-operator: ## Write .bob/mcp.json for the OPERATOR persona (register 
 	echo "wrote .bob/mcp.json — platform OPERATOR persona (register/list/audit/evaluate). Restart Bob."; \
 	echo "Switch back to the analyst with: make bob-install"
 
+bob-config-builder: ## Print the Bob MCP config for the BUILDER persona (Builder vserver + admin token)
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	UUID=$$(curl -s -H "Authorization: Bearer $$ADMIN" localhost:4444/servers | python3 -c "import sys,json;[print(s['id']) for s in json.load(sys.stdin) if s.get('name')=='Builder']" 2>/dev/null | head -1); \
+	if [ -z "$$UUID" ]; then echo "Builder server not found — run 'make salestax-grant' first" >&2; exit 1; fi; \
+	sed -e "s|REPLACE_BUILDER_UUID|$$UUID|" -e "s|REPLACE_GATEWAY_TOKEN|$$ADMIN|" bob-personas/mcp.builder.json.template
+
+bob-install-builder: ## Write .bob/mcp.json for the BUILDER persona (calls the dev's own granted tools)
+	@mkdir -p .bob; \
+	$(MAKE) -s bob-config-builder > .bob/mcp.json && \
+	echo "wrote .bob/mcp.json — BUILDER persona (calls your granted tools: add_tax, convert). Restart Bob."; \
+	echo "Switch back to the analyst with: make bob-install"
+
 connect: ## Print the ONE 'bob mcp add' command for a LOCAL/REMOTE Bob to drive THIS gateway (no Docker/uv/make on the attendee's laptop). Set GATEWAY_URL=... for a VM, or run inside a Codespace for auto-detect.
 	@bash scripts/connect.sh
 
@@ -227,6 +239,36 @@ stage4-mesh: ## Dev Day ④: the full governed mesh (== quickstart end-state)
 	@bash scripts/stages.sh mesh
 stage-reset: ## Stop the bare Stage-1 fx-rates server (if running)
 	@bash scripts/stages.sh reset
+
+SALESTAX_COMPOSE := $(COMPOSE) -f docker-compose.yml -f docker-compose.salestax.yml
+
+salestax-up: ## (Stage 2) build + run the Bob-built sales-tax server as a container on the mesh network
+	@if [ ! -f mcp-servers/sales-tax/server.py ]; then \
+	  echo "mcp-servers/sales-tax/server.py is missing — run 'make stage1-build' or 'make stage1-scaffold' first" >&2; exit 1; fi
+	$(SALESTAX_COMPOSE) up -d --build sales-tax
+	@echo "sales-tax container up — host :8001 (health probe), gateway reaches it at http://sales-tax:8000/mcp"
+
+salestax-down: ## Stop + remove just the ad-hoc sales-tax container
+	@$(SALESTAX_COMPOSE) rm -sf sales-tax 2>/dev/null || true
+	@echo "sales-tax container stopped + removed"
+
+salestax-register: ## (Stage 2 fallback) register/refresh sales-tax in the gateway (delete-then-recreate)
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	ADMIN_TOKEN=$$ADMIN uv run --with httpx python gateway/seed/register.py sales-tax http://sales-tax:8000/mcp STREAMABLEHTTP
+
+salestax-grant: ## (Stage 2) grant add_tax into the Builder vserver + install the Builder persona so Bob can CALL it
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	ADMIN_TOKEN=$$ADMIN uv run --with httpx python gateway/seed/grant.py Builder add_tax >/dev/null && \
+	$(MAKE) -s bob-install-builder
+
+fxrates-extend: ## (Stage 2b fallback) give fx-rates a convert tool, rebuild, refresh in the gateway, grant it to Bob
+	cp mcp-servers/fx-rates/server_with_convert.py mcp-servers/fx-rates/server.py
+	$(COMPOSE) up -d --build fx-rates
+	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
+	ADMIN_TOKEN=$$ADMIN uv run --with httpx python gateway/seed/register.py fx-rates http://fx-rates:8000/mcp STREAMABLEHTTP && \
+	ADMIN_TOKEN=$$ADMIN uv run --with httpx python gateway/seed/grant.py Builder convert add_tax >/dev/null && \
+	$(MAKE) -s bob-install-builder
+	@echo "fx-rates extended with 'convert', re-discovered, and granted to Bob's Builder persona"
 
 fxrates-register: ## (Stage 2 fallback) register fx-rates into the gateway via API, as Bob's operator would
 	@ADMIN=$$($(MINT) -u admin@finbyte.demo --admin -e 10080 -s $(SECRET) 2>/dev/null | tail -1); \
@@ -351,7 +393,7 @@ lint: ## Lint Python (ruff + black --check)
 lint-rust: ## Lint the Rust agent (fmt + clippy)
 	cd a2a-agents/payments && cargo fmt --check && cargo clippy -- -D warnings
 test: ## Run pytest (tolerates "no tests collected")
-	@uv run --with pytest pytest -q $(PY_DIRS) || { c=$$?; [ $$c -eq 5 ] || exit $$c; }
+	@uv run --with pytest --with httpx pytest -q $(PY_DIRS) || { c=$$?; [ $$c -eq 5 ] || exit $$c; }
 bandit: ## Python source security scan
 	uvx bandit -c .bandit.yaml -r $(PY_DIRS) -ll
 pip-audit: ## Dependency CVE scan

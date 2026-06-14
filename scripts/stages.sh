@@ -32,9 +32,10 @@ bob(){ printf "     ${CYN}▸ %s${R}\n" "$*"; }   # an exact line to type at Bob
 RAW_PORT=8000
 RAW_PIDFILE=/tmp/finbyte-stage1-raw.pid
 RAW_LOG=/tmp/finbyte-stage1-raw.log
-# Stage 1: Bob writes this MCP server FROM SCRATCH (gitignored); _solution.py is
-# the tracked fallback (make stage1-scaffold). The gateway never reaches this
-# bare host process — fx-rates (a compose service) is the Stage 2 onboard vehicle.
+# Stage 1: Bob writes this MCP server FROM SCRATCH (generated, NOT committed — and
+# deliberately NOT gitignored, since Bob refuses to write ignored paths); _solution.py
+# is the tracked fallback (make stage1-scaffold). In Stage 2 this same server is
+# containerised (docker-compose.salestax.yml) and onboarded as the dev's own tool.
 SCRATCH_DIR=mcp-servers/sales-tax
 SCRATCH_SRC=$SCRATCH_DIR/server.py
 HOWTO=docs/cockpit.html
@@ -51,6 +52,14 @@ start_raw(){
   ( uv run --with fastmcp==3.3.1 python "$SCRATCH_SRC" >"$RAW_LOG" 2>&1 & echo $! >"$RAW_PIDFILE" )
   for _ in $(seq 1 40); do
     curl -sf "localhost:$RAW_PORT/health" >/dev/null 2>&1 && return 0
+    sleep 1
+  done
+  return 1
+}
+
+wait_salestax_container(){  # the CONTAINER answers on host :8001 (raw still owns :8000)
+  for _ in $(seq 1 40); do
+    curl -sf "localhost:8001/health" >/dev/null 2>&1 && return 0
     sleep 1
   done
   return 1
@@ -93,9 +102,14 @@ stage_build(){
     exit 1
   fi
   echo
-  say "${B}The point to land:${R} this works — and that's exactly the problem. Anyone on"
-  say "the network calls anything; no redaction, no policy, no audit. Open the"
-  say "Inspector and call the tool yourself — notice there's ${B}no token field${R}:"
+  say "${B}③ Call it — proof it works (and that's the problem):${R}"
+  if uv run --with fastmcp==3.3.1 python scripts/salestax_smoke.py; then
+    ok "called add_tax over MCP — no token, no policy, no audit. Anyone on the network could."
+  else
+    no "smoke call failed — if Bob's server has a bug, drop in the known-good one: ${CYN}make stage1-scaffold${R}, then re-run."
+  fi
+  echo
+  say "Want to poke it by hand too? Open the MCP Inspector (no token field):"
   echo
   command -v npx >/dev/null 2>&1 || { no "npx not found (Node ≥18) — skipping the Inspector; the bare server is still up on :$RAW_PORT."; \
     say "  When you're ready to govern it:  ${CYN}make stage2-govern${R}"; open_build_guide; exit 0; }
@@ -114,35 +128,58 @@ stage_build(){
 
 # ──────────────────────────────────────────────────────────────────────────────
 stage_govern(){
-  hd "STAGE 2/4 — put that same tool behind ContextForge"
+  hd "STAGE 2/4 — govern the tool you just built (register → grant → call)"
   say "Same code — now it goes into the mesh: containerised, in the catalog, and"
   say "reachable only through the one governed seam with a token."
   echo
-  stop_raw && ok "stopped Bob's bare Stage-1 server (the gateway now governs a real mesh service: fx-rates)"
-  say "Bringing up the gateway + OPA + backends (idempotent; builds the fx-rates container)…"
-  make up || { no "stack failed to start — see: make logs"; exit 1; }
-  # seed builds the catalog + the Operator virtual server whose tools Bob uses to
-  # register (and deliberately leaves fx-rates UNregistered, so the live beat works).
+
+  if [ ! -f "$SCRATCH_SRC" ]; then
+    no "$SCRATCH_SRC doesn't exist — you can't govern what wasn't built."
+    say "  Run ${CYN}make stage1-build${R} (have Bob write it) or ${CYN}make stage1-scaffold${R}, then re-run ${CYN}make stage2-govern${R}."
+    exit 0
+  fi
+
+  say "Bringing up the gateway + OPA + backends (idempotent)…"
+  make up   || { no "stack failed to start — see: make logs"; exit 1; }
   make seed || { no "seed failed — retry 'make seed'"; exit 1; }
-  ok "mesh seeded — catalog built; fx-rates left unregistered for Bob to onboard live"
-  make -s bob-install-operator >/dev/null 2>&1 && ok "Bob set to the OPERATOR persona (can register/list/audit)" \
+  ok "mesh seeded — catalog + Operator virtual server built"
+  make -s bob-install-operator >/dev/null 2>&1 && ok "Bob set to the OPERATOR persona (can register)" \
     || no "couldn't set operator persona — run 'make bob-install-operator'"
   echo
-  say "${B}Drive Bob (operator):${R}"
-  bob "Register the fx-rates service at http://fx-rates:8000/mcp."
+
+  say "${B}②a Containerise the tool you built${R} (on the mesh network):"
+  make salestax-up || { no "couldn't build/run the sales-tax container — see 'make logs'"; exit 1; }
+  if wait_salestax_container; then
+    ok "sales-tax container healthy on :8001"
+    stop_raw && ok "retired the bare Stage-1 process on :8000 (the container takes over)"
+  else
+    no "the sales-tax container didn't answer on :8001 — check 'make logs'"; exit 1
+  fi
+  echo
+
+  say "${B}②b Register it${R} — drive Bob (operator):"
+  bob "Register the sales-tax service at http://sales-tax:8000/mcp."
   bob "List everything ContextForge is governing."
-  say "  ${D}fx-rates now lands in the catalog (token-gated). Bob can't CALL it yet —${R}"
-  say "  ${D}exposing it to an agent is a further grant (add it to a virtual server),${R}"
-  say "  ${D}which is the least-privilege point itself.${R}"
-  say "  ${D}Fallback if Bob's registration wobbles:${R} ${CYN}make fxrates-register${R}"
+  say "  ${D}Fallback:${R} ${CYN}make salestax-register${R}"
+  say "  ${D}It's now in the catalog, token-gated — but Bob still ${B}can't call it${R}.${D}"
+  say "  Exposing a tool to an agent is a separate grant. That gate ${B}is${R}${D} least-privilege.${R}"
   echo
-  say "${B}The contrast to make explicit (Stage 1 → now):${R}"
-  say "  • Stage 1:  ${CYN}curl localhost:8000/mcp${R}     ${D}→ wide open, any caller, any tool${R}"
-  say "  • Now:      everything flows through ${CYN}localhost:4444${R} ${D}→ catalog + token required${R}"
+
+  say "${B}②c Grant it + call it${R} — make the tool you built usable by your agent:"
+  say "  ${CYN}make salestax-grant${R}   ${D}(adds add_tax to a 'Builder' vserver + switches Bob to the builder persona)${R}"
+  bob "Add sales tax to \$100."
+  say "  ${D}→ governed call through :4444 → 108.50. Built → governed → ${B}used${R}.${D} The loop closes.${R}"
   echo
+
+  say "${B}②d Bonus — have Bob extend an EXISTING service${R} (fx-rates):"
+  bob "Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it."
+  bob "Re-register fx-rates and convert 1000 USD to EUR."
+  say "  ${D}Fallback (does all of it):${R} ${CYN}make fxrates-extend${R}"
+  say "  ${D}build-from-scratch (sales-tax) AND extend-existing (fx-rates), both governed.${R}"
+  echo
+
   ( open http://localhost:4444/admin 2>/dev/null || xdg-open http://localhost:4444/admin 2>/dev/null || true )
-  say "Watch it land in the catalog → ${CYN}make monitor${R} (Admin UI)."
-  say "Next: ${CYN}make stage3-controls${R}"
+  say "Watch both land in the catalog → ${CYN}make monitor${R} (Admin UI). Next: ${CYN}make stage3-controls${R}"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -193,6 +230,15 @@ case "${1:-}" in
   govern)   stage_govern ;;
   controls) stage_controls ;;
   mesh)     stage_mesh ;;
-  reset)    stop_raw; rm -f "$SCRATCH_SRC" && echo "stopped the bare Stage-1 server and removed $SCRATCH_SRC (beat repeats clean; _solution.py kept)." ;;
+  reset)
+    stop_raw
+    rm -f "$SCRATCH_SRC"
+    make -s salestax-down >/dev/null 2>&1 || true
+    if ! git diff --quiet -- mcp-servers/fx-rates/server.py 2>/dev/null; then
+      echo "note: discarding local edits to mcp-servers/fx-rates/server.py (restoring committed version)."
+    fi
+    git checkout HEAD -- mcp-servers/fx-rates/server.py 2>/dev/null || true
+    echo "reset: stopped the bare server, removed $SCRATCH_SRC, stopped the sales-tax container, restored base fx-rates ( _solution.py / server_with_convert.py kept )."
+    ;;
   *) echo "usage: bash scripts/stages.sh {build|govern|controls|mesh|reset}" >&2; exit 2 ;;
 esac

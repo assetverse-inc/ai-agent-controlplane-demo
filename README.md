@@ -119,6 +119,8 @@ make quickstart
 
 > **Proof is headless.** `make quickstart` finishes `16 passed, 0 failed` even on a box without `bob` or Node (a Linux VM or CI runner): Bob only **drives** the demo — it isn't needed to bring up the stack or prove the controls. `make bob` / `make bob-operator` also fail gracefully if `bob` isn't installed (they still write `.bob/mcp.json`, print an install hint, and exit `0`).
 
+> **Building it up instead of dropping in?** `make quickstart` is the top-down path (zero → finished mesh). For a **developer** audience there's a bottom-up **Dev Day progressive-build track** (`make dev-start`, then `make stage1-build … stage4-mesh`): Bob writes a brand-new MCP server (`sales-tax`) from scratch, then you watch that *same* tool get containerised, governed, and called back through ContextForge — `register → grant → call` — before the four controls switch on. Bonus beat: Bob *extends* an existing service (`fx-rates`). No Docker on the attendee's laptop? `make connect` lets them drive the whole governed mesh with **only Bob** pointed at a teammate's box, a VM, or a Codespace. See **`docs/SHOWCASE-BOB.md`** and the **🎓 Progressive Build** tab in `docs/cockpit.html`.
+
 ### Drive Bob
 
 **Act 1 — FinOps analyst (least-privilege).** Launch with `make bob` (cwd-proof; it refreshes the config first), then try:
@@ -227,10 +229,11 @@ make logs-opa    # live, readable OPA decisions: ALLOW/DENY + args + reason
 ```text
 ai-agent-controlplane-demo/
 ├── a2a-agents/        # the 2 A2A agents: auditor/ (Python, a2a-sdk) + payments/ (Rust, a2a-lf)
-├── bob-personas/      # mcp.json templates for the analyst + operator personas (live-UUID rewrite)
+├── bob-personas/      # mcp.json templates for the analyst + operator + builder personas (live-UUID rewrite)
 ├── companion/         # optional browser dashboard (Flask, :7070) to watch the control plane
 ├── gateway/           # ContextForge image + OPA image: custom/ plugin, plugins/ config, policies/ Rego, seed/
 ├── mcp-servers/       # the 6 MCP servers: expense-db, erp-payments, policy-docs, notify, controlplane, fx-rates
+│                      #   + sales-tax/ — the Dev Day "Bob builds it from scratch" server (generated; Stage 1→2)
 ├── scripts/           # quickstart.sh, demo.sh, watch-decisions.sh, money-shots/ proof suite
 ├── slides/            # the conference talk deck (.pptx) + outline
 └── docs/              # QUICKSTART/RUNBOOK/LOG-CHEATSHEET/SCENARIOS/SHOWCASE-BOB + diagrams/

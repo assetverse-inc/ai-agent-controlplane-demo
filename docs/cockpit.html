@@ -206,9 +206,9 @@
   <div id="view-build" class="view">
 
     <section>
-      <h2 style="margin-bottom:8px">Build it live — bare tool → governed mesh</h2>
-      <p class="lede">Four stages. At each one <b>you prompt IBM Bob</b> to do the real work — build the server, register it, drive the controls — while <code class="inline">make</code> handles the plumbing. Copy the prompts straight from here into Bob. Every stage has a one-command fallback so a wobbly live edit never stalls the room.</p>
-      <div class="note">This is the <b>live-talk</b> path. The all-at-once solo path is <code class="inline">make quickstart</code>; the watch-everything window is the <b>🛰 Cockpit</b> tab.</div>
+      <h2 style="margin-bottom:8px">Build an MCP server in 2 minutes — then watch it get governed</h2>
+      <p class="lede">Four stages. At each one <b>you prompt IBM Bob</b> to do the real work — build the server, <b>containerize it</b>, register it, grant it, drive the controls — while <code class="inline">make</code> handles the plumbing. Copy the prompts straight from here into Bob. Every stage has a one-command fallback if a live edit wobbles.</p>
+      <div class="note">The all-at-once path is <code class="inline">make quickstart</code>; the watch-everything window is the <b>🛰 Cockpit</b> tab.</div>
       <div class="controls-row">
         <button onclick="document.querySelectorAll('#view-build details.twisty').forEach(function(d){d.open=true})">⊞ Expand all</button>
         <button onclick="document.querySelectorAll('#view-build details.twisty').forEach(function(d){d.open=false})">⊟ Collapse all</button>
@@ -223,15 +223,54 @@
       </div>
     </details>
 
+    <details class="twisty">
+      <summary>No Docker on your laptop? Drive the whole mesh with just Bob</summary>
+      <div class="twisty-body">
+        <p>You don't need Docker, <code class="inline">uv</code>, or <code class="inline">make</code> to <em>drive</em> this. If the governed stack is running somewhere — a teammate's machine, a VM, or a <b>GitHub Codespace</b> — your laptop only needs IBM Bob. One command points Bob at the gateway over HTTPS:</p>
+        <div class="cmd">make connect<button class="copy" data-copy="make connect">copy</button></div>
+        <p style="margin-bottom:0">It prints a ready-to-paste <code class="inline">bob mcp add finbyte-gateway … -t http</code> line (streamable-HTTP on <code class="inline">/mcp</code> — verified through the Codespaces proxy). Redaction, least-privilege, and OPA all still apply over that remote connection. See <code class="inline">docs/ONBOARDING.md</code>.</p>
+      </div>
+    </details>
+
     <details class="twisty" open>
       <summary><span class="stagenum">1</span> Bob builds an MCP server <em>from scratch</em> <span class="pill port">ungoverned · :8000</span></summary>
       <div class="twisty-body">
         <p>The starting point every developer knows: a plain MCP server on your laptop. No gateway, no policy, no auth — whoever reaches the port runs any tool. <b>That exposure is the problem Stage 2 solves.</b></p>
         <div class="saybob">① Tell Bob to build it</div>
         <div class="cmd">Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.<button class="copy" data-copy="Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.">copy</button></div>
-        <div class="runlabel">② Serve it bare + open the Inspector</div>
+        <p class="note" style="margin-top:0">Bob writes, runs, and fixes its own code — if the first <code class="inline">server.py</code> won't start, paste the error back and Bob iterates until it runs.</p>
+        <details class="twisty">
+          <summary>What Bob produced (<code class="inline">mcp-servers/sales-tax/server.py</code>)</summary>
+          <div class="twisty-body">
+            <pre><code>from fastmcp import FastMCP
+
+mcp = FastMCP("sales-tax")
+
+@mcp.tool
+def add_tax(amount: float, rate_pct: float = 8.5) -> dict:
+    """Add sales tax to an amount. `rate_pct` is a percentage, e.g. 8.5 for 8.5%."""
+    tax = round(amount * rate_pct / 100, 2)
+    return {
+        "amount": amount,
+        "rate_pct": rate_pct,
+        "tax": tax,
+        "total": round(amount + tax, 2),
+    }
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health(request):
+    from starlette.responses import JSONResponse
+    return JSONResponse({"status": "ok", "server": "sales-tax"})
+
+if __name__ == "__main__":
+    mcp.run(transport="http", host="0.0.0.0", port=8000)</code></pre>
+          </div>
+        </details>
+        <div class="runlabel">② Serve it bare + call it</div>
         <div class="cmd">make stage1-build<button class="copy" data-copy="make stage1-build">copy</button></div>
-        <p style="margin-bottom:0">The MCP Inspector opens with <b>no token field</b> — connect (Via Proxy) and call <code class="inline">add_tax</code> yourself. Anyone on the network could. No redaction, no policy, no audit.</p>
+        <p>It runs the server bare on <code class="inline">:8000</code> and calls the tool to prove it works:</p>
+        <div class="cmd">add_tax(100, 8.5) → tax=8.50, total=108.50   <span style="color:var(--muted)"># no token, no policy</span></div>
+        <p style="margin-bottom:0"><b>That's exactly the problem.</b> Anyone on the network calls anything — no redaction, no policy, no audit. (Want to poke it by hand? <code class="inline">make stage1-build</code> also opens the MCP Inspector, no token field.)</p>
         <div class="warnbox"><b>Fallback</b> if Bob's file won't run: <code class="inline">make stage1-scaffold</code> drops in a known-good <code class="inline">sales-tax</code> server, then re-run <code class="inline">make stage1-build</code>.</div>
       </div>
     </details>
@@ -239,20 +278,26 @@
     <details class="twisty" open>
       <summary><span class="stagenum">2</span> Put a tool behind ContextForge <span class="pill port">governed · :4444</span></summary>
       <div class="twisty-body">
-        <p>Building is easy; <b>governing</b> is the hard part ContextForge solves. Take <code class="inline">fx-rates</code> — a service already running in the mesh — and have Bob onboard it. Now it's in the catalog and reachable only through the one seam, with a token.</p>
-        <div class="runlabel">① Bring up the stack + seed it (operator persona)</div>
+        <p>Building is easy; <b>governing</b> is the hard part ContextForge solves. Carry the tool you just built into the mesh — then watch the grant be the thing that makes it callable.</p>
+        <div class="runlabel">①  Containerize + bring the stack up (operator persona)</div>
         <div class="cmd">make stage2-govern<button class="copy" data-copy="make stage2-govern">copy</button></div>
-        <div class="saybob">② Tell Bob (operator) to onboard + use it</div>
-        <div class="cmd">Register the fx-rates service at http://fx-rates:8000/mcp.<button class="copy" data-copy="Register the fx-rates service at http://fx-rates:8000/mcp.">copy</button></div>
-        <div class="cmd">List everything ContextForge is governing.<button class="copy" data-copy="List everything ContextForge is governing.">copy</button></div>
-        <p style="margin-bottom:0"><b>The contrast to land:</b> Stage 1 was wide open on <code class="inline">:8000</code>; now every call goes through <code class="inline">:4444</code> — catalog + token required. Watch it appear in the <a href="http://localhost:4444/admin" target="_blank">Admin UI</a> (<code class="inline">make monitor</code>).</p>
-        <div class="note">fx-rates now lands in the catalog (token-gated), but Bob can't <em>call</em> it yet — exposing a governed tool to an agent is a further grant (add it to a virtual server). That gate <em>is</em> the least-privilege control.</div>
-        <div class="warnbox"><b>Fallback</b> if Bob's registration wobbles: <code class="inline">make fxrates-register</code>.</div>
+        <div class="saybob">②a Register it — tell Bob (operator)</div>
+        <div class="cmd">Register the sales-tax service at http://sales-tax:8000/mcp.<button class="copy" data-copy="Register the sales-tax service at http://sales-tax:8000/mcp.">copy</button></div>
+        <p>Now it's in the catalog, token-gated — but Bob <b>still can't call it</b>. Exposing a tool to an agent is a separate grant. <b>That gate is least-privilege.</b></p>
+        <div class="runlabel">②b Grant it, then call it</div>
+        <div class="cmd">make salestax-grant<button class="copy" data-copy="make salestax-grant">copy</button></div>
+        <div class="saybob">Now tell Bob (builder)</div>
+        <div class="cmd">Add sales tax to $100.<button class="copy" data-copy="Add sales tax to $100.">copy</button></div>
+        <p><b>→ governed call through <code class="inline">:4444</code> → 108.50.</b> The tool you ran wide-open on <code class="inline">:8000</code> now runs token-gated through the one seam. Built → governed → <b>used</b>.</p>
+        <div class="saybob">②c Bonus — have Bob extend an existing service (fx-rates)</div>
+        <div class="cmd">Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it.<button class="copy" data-copy="Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it.">copy</button></div>
+        <div class="cmd">Re-register fx-rates and convert 1000 USD to EUR.<button class="copy" data-copy="Re-register fx-rates and convert 1000 USD to EUR.">copy</button></div>
+        <div class="warnbox"><b>Fallback</b> (does 2a–2c deterministically): <code class="inline">make salestax-register</code>, <code class="inline">make salestax-grant</code>, <code class="inline">make fxrates-extend</code>.</div>
       </div>
     </details>
 
     <details class="twisty" open>
-      <summary><span class="stagenum">3</span> Turn the four controls on <span class="pill rec">the gasp</span></summary>
+      <summary><span class="stagenum">3</span> Turn the four controls on <span class="pill rec">4 controls fire</span></summary>
       <div class="twisty-body">
         <p>Being in the catalog buys auth + one seam. The <em>interesting</em> controls live in the FinOps mesh — watch each one bite a real call Bob makes.</p>
         <div class="runlabel">① Seed the FinOps mesh + analyst persona</div>
@@ -277,7 +322,7 @@
     <details class="twisty" open>
       <summary><span class="stagenum">4</span> The full governed mesh <span class="pill rec">== quickstart</span></summary>
       <div class="twisty-body">
-        <p>This is where <code class="inline">make quickstart</code> would have dropped you in one shot — but the room watched it get built. Prove the whole thing, then pick a cockpit.</p>
+        <p>This is where <code class="inline">make quickstart</code> would have dropped you in one shot — but you built it stage by stage. Prove the whole thing, then pick a cockpit.</p>
         <div class="runlabel">① Prove it end-to-end</div>
         <div class="cmd">make stage4-mesh<button class="copy" data-copy="make stage4-mesh">copy</button></div>
         <div class="runlabel">② Drive it from here</div>
@@ -291,7 +336,7 @@
     <details class="twisty">
       <summary>↺ Reset / repeat the beat</summary>
       <div class="twisty-body">
-        <div class="cmd">make stage-reset        <span style="color:var(--muted)"># stop Bob's bare server + delete the generated server.py</span><button class="copy" data-copy="make stage-reset">copy</button></div>
+        <div class="cmd">make stage-reset        <span style="color:var(--muted)"># stop bare server + container, delete generated server.py, restore base fx-rates</span><button class="copy" data-copy="make stage-reset">copy</button></div>
         <div class="cmd">make demo-reset         <span style="color:var(--muted)"># recreate + reseed the gateway to known-good</span><button class="copy" data-copy="make demo-reset">copy</button></div>
         <div class="cmd">make fxrates-reset      <span style="color:var(--muted)"># restore base fx-rates (repeat the onboard beat)</span><button class="copy" data-copy="make fxrates-reset">copy</button></div>
       </div>

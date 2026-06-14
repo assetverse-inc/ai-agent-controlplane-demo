@@ -1,0 +1,11 @@
+# Stage-2-only override: brings up the sales-tax server Bob built in Stage 1 as a
+# container on the SAME network as the gateway. NOT referenced by the base
+# `make up`, so a fresh clone (no generated server.py) is never affected.
+# Host port 8001 lets the Stage-2 health gate probe the CONTAINER unambiguously
+# (the raw Stage-1 process still owns host :8000 until it is stopped).
+services:
+  sales-tax:
+    build: ./mcp-servers/sales-tax
+    restart: unless-stopped
+    ports:
+      - "8001:8000"

@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "finbyte-builder": {
+      "command": "uvx",
+      "args": ["--from", "mcp-contextforge-gateway", "python", "-m", "mcpgateway.wrapper"],
+      "env": {
+        "MCP_SERVER_URL": "http://localhost:4444/servers/REPLACE_BUILDER_UUID/sse",
+        "MCP_AUTH": "Bearer REPLACE_GATEWAY_TOKEN",
+        "DATABASE_URL": "sqlite:////tmp/mcpwrapper.db",
+        "MCP_WRAPPER_LOG_LEVEL": "OFF"
+      },
+      "alwaysAllow": [
+        "sales-tax-add-tax",
+        "fx-rates-convert"
+      ],
+      "disabled": false
+    }
+  }
+}
