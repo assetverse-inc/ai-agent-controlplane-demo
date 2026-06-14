@@ -1,0 +1,41 @@
+
+━━ STAGE 1/4 — Bob builds an MCP server FROM SCRATCH (no governance) ━━
+The starting point every developer recognises: a plain MCP server on your
+laptop. No gateway, no policy, no auth. Whoever reaches the port runs any tool.
+
+① Tell Bob to build it (the copy-paste prompt is on the prompt-card):
+     ▸ Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.
+  Fallback if Bob's file won't run: make stage1-scaffold  (drops in the finished server)
+
+② Running Bob's server bare on :8000 (no gateway, no policy, no auth)…
+  ✔ live & UNGOVERNED at http://localhost:8000/mcp  (the server Bob just wrote)
+
+③ Call it — proof it works (and that's the problem):
+add_tax(100, 8.5) -> tax=8.50, total=108.50   (no token, no policy - anyone on :8000 can call this)
+  ✔ called add_tax over MCP — no token, no policy, no audit. Anyone on the network could.
+
+Want to poke it by hand too? Open the MCP Inspector (no token field):
+
+  In the Inspector:  Connection Type → Via Proxy, then Connect (no auth needed).
+  When you're ready to govern it:  make stage2-govern (stops this bare server).
+  Opened the follow-along guide → docs/build.html.
+
+Starting MCP inspector...
+⚙️ Proxy server listening on localhost:6277
+⚠️  WARNING: Authentication is disabled. This is not recommended.
+
+🚀 MCP Inspector is up and running at:
+   http://localhost:6274
+
+🌐 Opening browser...
+New StreamableHttp connection request
+Query parameters: {"url":"http://localhost:8000/mcp","transportType":"streamable-http"}
+Created StreamableHttp client transport
+Client <-> Proxy  sessionId: e9a3e7e3-97e5-4d67-a96a-2be6f2175534
+Proxy  <-> Server sessionId: dfdcede733e04c45829bd754f32171e2
+Received POST message for sessionId e9a3e7e3-97e5-4d67-a96a-2be6f2175534
+Received GET message for sessionId e9a3e7e3-97e5-4d67-a96a-2be6f2175534
+Received POST message for sessionId e9a3e7e3-97e5-4d67-a96a-2be6f2175534
+scripts/stages.sh: line 78:  9166 Terminated: 15          DANGEROUSLY_OMIT_AUTH=true npx -y @modelcontextprotocol/inspector --config "$CFG" --server sales-tax-RAW
+
+  ✔ Inspector closed. The bare server is still up on :8000 (stop it: make stage2-govern, or: bash scripts/stages.sh reset).

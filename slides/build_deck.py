@@ -1082,6 +1082,10 @@ monitor (Admin UI Logs/Metrics), MCP Inspector (8 governed FinOps tools, wire
 ABSENT; get_receipt returns REDACTED live), A2A Inspector (both agent cards).
 
 Say it: "You didn't watch a slideware mesh. You built it - and it's provable."
+
+CAPTURED PROOF: docs/evidence/index.html - the whole run (build → govern → 4 controls)
+with real gateway responses + Admin-UI screenshots + the 16/16 suite output. Open it
+if a control ever refuses to fire live. Stage runbook: docs/dev-day-runsheet.md.
 """)
     footer(s, 12, TOTAL)
 
@@ -1419,6 +1423,12 @@ prints a `bob mcp add … -t http` line pointed at a gateway running ELSEWHERE -
 teammate's box, a VM, or a GitHub Codespace (verified end-to-end: 108.5 through the
 governed gateway over the public proxy, redaction + OPA block intact). You drive the
 whole governed mesh with ONLY Bob installed - governance holds over the wire.
+
+CAN'T RUN IT LOCALLY? One-click "Open in GitHub Codespaces" badge in the README
+(codespaces.new/manavgup/ai-agent-controlplane-demo) - the devcontainer auto-runs
+`make up && make seed` in the cloud; make port 4444 Public, then `make connect`.
+GOTCHA: use the `-t http` + `/mcp` form (never SSE - Codespaces proxies buffer SSE,
+so Bob hangs on connect). Tier 2 in docs/ONBOARDING.md.
 """)
     footer(s, 18, TOTAL)
 

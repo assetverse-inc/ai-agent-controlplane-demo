@@ -1,0 +1,19 @@
+{
+  "error": {
+    "code": -32602,
+    "message": "Plugin Violation: Wire amount 50000 exceeds the $10,000 auto-approve limit and requires dual approval (approval=true). FinByte T&E policy \u00a72.",
+    "data": {
+      "description": "Wire amount 50000 exceeds the $10,000 auto-approve limit and requires dual approval (approval=true). FinByte T&E policy \u00a72.",
+      "details": {
+        "tool": "a2a-payments",
+        "args_keys": [
+          "amount",
+          "approval",
+          "payee"
+        ]
+      },
+      "plugin_error_code": "WIRE_POLICY_DENY",
+      "plugin_name": "FinByteGuard"
+    }
+  }
+}

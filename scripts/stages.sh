@@ -38,7 +38,7 @@ RAW_LOG=/tmp/finbyte-stage1-raw.log
 # containerised (docker-compose.salestax.yml) and onboarded as the dev's own tool.
 SCRATCH_DIR=mcp-servers/sales-tax
 SCRATCH_SRC=$SCRATCH_DIR/server.py
-HOWTO=docs/cockpit.html
+HOWTO=docs/build.html
 
 stop_raw(){
   [ -f "$RAW_PIDFILE" ] && { kill "$(cat "$RAW_PIDFILE")" 2>/dev/null || true; rm -f "$RAW_PIDFILE"; }
@@ -65,12 +65,12 @@ wait_salestax_container(){  # the CONTAINER answers on host :8001 (raw still own
   return 1
 }
 
-open_build_guide(){ # open the prompt-card (build view) — SSH-aware, never fatal
+open_build_guide(){ # open the follow-along build guide — SSH-aware, never fatal
   if [ -n "${SSH_CONNECTION:-}${SSH_TTY:-}" ] || ! { command -v open >/dev/null 2>&1 || command -v xdg-open >/dev/null 2>&1; }; then
-    say "  ${D}Prompt-card (copy-paste Bob prompts):${R} open ${CYN}$HOWTO${R} and click the ${B}🎓 Progressive Build${R} tab."
+    say "  ${D}Follow-along guide (copy-paste Bob prompts):${R} open ${CYN}$HOWTO${R}."
   else
-    ( open "$HOWTO#build" 2>/dev/null || xdg-open "$HOWTO#build" 2>/dev/null || true )
-    say "  ${D}Opened the prompt-card → $HOWTO (Progressive Build tab).${R}"
+    ( open "$HOWTO" 2>/dev/null || xdg-open "$HOWTO" 2>/dev/null || true )
+    say "  ${D}Opened the follow-along guide → $HOWTO.${R}"
   fi
 }
 

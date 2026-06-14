@@ -1,0 +1,2 @@
+governed tools visible to BUILDER: ['sales-tax-add-tax']
+governed add_tax(100,8.5) → {'amount': 100.0, 'rate_pct': 8.5, 'tax': 8.5, 'total': 108.5}

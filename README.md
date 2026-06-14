@@ -3,6 +3,12 @@
 > **IBM Bob × ContextForge — the AI agent control plane.** One AI agent, a fintech agent mesh, and a gateway that governs every move. _Who's in charge of your agents?_
 
 <p align="center">
+  <a href="https://codespaces.new/manavgup/ai-agent-controlplane-demo?quickstart=1"><img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="28"></a>
+</p>
+
+<p align="center"><em>Can't run Docker/ContextForge locally? Click the badge — the whole governed mesh builds in the cloud; you only need IBM Bob on your laptop (<a href="docs/ONBOARDING.md">Tier&nbsp;2 in ONBOARDING.md</a>).</em></p>
+
+<p align="center">
   <img src="docs/diagrams/architecture.svg" alt="Reference architecture: IBM Bob drives a FinByte agent mesh through the IBM ContextForge gateway, with an OPA sidecar, six MCP servers, and two cross-language A2A agents." width="900">
 </p>
 
@@ -119,7 +125,7 @@ Same stack, two stories — **pick your path**:
 Bottom-up, the inverse of `make quickstart`: start from a bare MCP server you'd recognise anywhere and earn ContextForge one layer at a time — **carrying the tool you built the whole way**. Open the prompt-card and drive Bob through four stages:
 
 ```bash
-make dev-start          # opens docs/cockpit.html → 🎓 Progressive Build (copy-paste Bob prompts)
+make dev-start          # opens docs/build.html — the follow-along build guide (copy-paste Bob prompts)
 ```
 
 | Stage | Command | What you (and Bob) do | Bob persona |
@@ -135,7 +141,7 @@ make dev-start          # opens docs/cockpit.html → 🎓 Progressive Build (co
 
 **No Docker on your laptop?** `make connect` prints a `bob mcp add … -t http` line pointed at a gateway running elsewhere — a teammate's box, a VM, or a **GitHub Codespace** — so you drive the whole governed mesh with **only Bob installed**, governance intact over the wire.
 
-→ Narrated beats: **[`docs/SHOWCASE-BOB.md`](docs/SHOWCASE-BOB.md)** · the **🎓 Progressive Build** tab in `docs/cockpit.html` · zero-setup tiers in **[`docs/ONBOARDING.md`](docs/ONBOARDING.md)**.
+→ Narrated beats: **[`docs/SHOWCASE-BOB.md`](docs/SHOWCASE-BOB.md)** · the follow-along **[`docs/build.html`](docs/build.html)** (presenter cockpit: **[`docs/cockpit.html`](docs/cockpit.html)**) · zero-setup tiers in **[`docs/ONBOARDING.md`](docs/ONBOARDING.md)**.
 
 </details>
 

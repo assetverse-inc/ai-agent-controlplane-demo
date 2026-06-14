@@ -1,0 +1,19 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"status\":\"wired\",\"payee\":\"Corner Cafe\",\"amount\":5000.0,\"approval\":false}"
+      }
+    ],
+    "isError": false,
+    "structuredContent": {
+      "status": "wired",
+      "payee": "Corner Cafe",
+      "amount": 5000.0,
+      "approval": false
+    }
+  },
+  "id": 1
+}

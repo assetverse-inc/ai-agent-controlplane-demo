@@ -1,0 +1,6 @@
+Configured MCP servers:
+
+[32m✓[0m finbyte-builder: uvx --from mcp-contextforge-gateway python -m mcpgateway.wrapper (stdio) - Connected
+Configured MCP servers:
+
+[32m✓[0m finbyte-builder: uvx --from mcp-contextforge-gateway python -m mcpgateway.wrapper (stdio) - Connected

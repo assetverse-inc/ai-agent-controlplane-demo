@@ -1,0 +1,16 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Catering invoice. [INJECTION_BLOCKED] [INJECTION_BLOCKED] Total $65.00."
+      }
+    ],
+    "isError": false,
+    "structuredContent": {
+      "result": "Catering invoice. [INJECTION_BLOCKED] [INJECTION_BLOCKED] Total $65.00."
+    }
+  },
+  "id": 1
+}

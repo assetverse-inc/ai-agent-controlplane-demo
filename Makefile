@@ -218,12 +218,12 @@ fxrates-reset: ## Restore the base fx-rates (no convert) so the 'Bob builds it' 
 # Scene-setters that walk a room up the stack one beat at a time, the inverse of
 # quickstart's "whole mesh at once". Each prints the exact Bob prompt + a
 # deterministic fallback; see scripts/stages.sh and docs/SHOWCASE-BOB.md.
-dev-start: ## Dev Day ⏵: open the progressive-build prompt-card page (docs/cockpit.html → 🎓 Progressive Build)
-	@url="file://$(CURDIR)/docs/cockpit.html#build"; \
-	echo "▶ Opening the Dev Day prompt-card → docs/cockpit.html (🎓 Progressive Build tab)"; \
+dev-start: ## Dev Day ⏵: open the follow-along build guide (docs/build.html)
+	@url="file://$(CURDIR)/docs/build.html"; \
+	echo "▶ Opening the Dev Day follow-along guide → docs/build.html"; \
 	echo "  copy each stage's Bob prompt straight from the page."; \
 	(open "$$url" 2>/dev/null || xdg-open "$$url" 2>/dev/null \
-	  || echo "  (no browser opener — open docs/cockpit.html yourself and click 🎓 Progressive Build)"); \
+	  || echo "  (no browser opener — open docs/build.html yourself)"); \
 	echo; echo "  Then walk the stages:  make stage1-build → stage2-govern → stage3-controls → stage4-mesh"
 
 stage1-build: ## Dev Day ①: Bob builds an MCP server from scratch → run RAW + inspect UNGOVERNED (:8000)

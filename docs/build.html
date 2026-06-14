@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build it with Bob — follow along (IBM Bob × ContextForge)</title>
+<style>
+  :root{
+    --ibm:#0f62fe; --ibm-dark:#0043ce; --ink:#161616; --muted:#525252;
+    --line:#e0e0e0; --bg:#f4f4f7; --card:#ffffff; --code-bg:#f2f4f8;
+    --ok:#198038; --warn:#8a6d00; --warn-bg:#fff8e1; --block:#da1e28;
+    --bob:#6929c4; --bob-bg:#f6f3ff; --bob-line:#dcccff;
+    --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;color:var(--ink);background:var(--bg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  code,kbd,pre{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  a{color:var(--ibm);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+  @media(max-width:720px){.wrap{padding:0 18px}}
+
+  header.hero{background:linear-gradient(135deg,#0f62fe 0%,#6929c4 100%);color:#fff;padding:42px 0 34px}
+  header.hero .wrap{display:flex;flex-direction:column;gap:6px}
+  .eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;font-weight:600}
+  header.hero h1{margin:4px 0 2px;font-size:32px;line-height:1.15;font-weight:700}
+  header.hero p.tag{margin:0;font-size:17px;opacity:.94}
+
+  nav.toc{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.94);
+    backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--line)}
+  nav.toc .wrap{display:flex;gap:4px;flex-wrap:wrap;padding:9px 24px;align-items:center}
+  nav.toc a{color:var(--muted);font-size:13.5px;font-weight:600;padding:6px 10px;border-radius:8px}
+  nav.toc a:hover{background:var(--code-bg);color:var(--ink);text-decoration:none}
+  nav.toc a.right{margin-left:auto;color:var(--ibm)}
+
+  main{padding:30px 0 64px}
+  h2{font-size:22px;margin:30px 0 4px;display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+    background:var(--ibm);color:#fff;font-size:15px;font-weight:700;flex:none}
+  .lede{color:var(--muted);margin:0 0 16px}
+
+  /* collapsible cards */
+  details.twisty{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ibm);
+    border-radius:var(--radius);box-shadow:var(--shadow);margin:0 0 14px;overflow:hidden}
+  details.twisty>summary{cursor:pointer;list-style:none;padding:15px 20px;font-size:18px;font-weight:600;
+    display:flex;align-items:center;gap:10px;user-select:none}
+  details.twisty>summary::-webkit-details-marker{display:none}
+  details.twisty>summary::before{content:'▸';color:var(--muted);font-size:13px;flex:none;width:14px}
+  details.twisty[open]>summary::before{content:'▾'}
+  details.twisty>summary:hover{background:#fafafc}
+  details.twisty[open]>summary{border-bottom:1px solid var(--line)}
+  details.twisty>summary .pill{margin-left:auto}
+  .twisty-body{padding:16px 20px 20px}
+  .twisty-body>*:first-child{margin-top:0}
+  .stagenum{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;
+    background:var(--ibm);color:#fff;font-size:14px;font-weight:700;flex:none}
+
+  .pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .pill.rec{background:#defbe6;color:var(--ok)} .pill.port{background:#edf5ff;color:var(--ibm-dark);font-family:"SF Mono",monospace}
+
+  /* command + say-to-Bob boxes */
+  .cmd{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:9px;
+    padding:11px 44px 11px 14px;margin:10px 0;font-size:14px;white-space:pre-wrap;word-break:break-word;color:#0b3a8f}
+  .cmd .copy{position:absolute;top:7px;right:7px;border:1px solid var(--line);background:#fff;color:var(--muted);
+    border-radius:7px;font-size:12px;font-weight:600;padding:3px 9px;cursor:pointer;line-height:1.4}
+  .cmd .copy:hover{border-color:var(--ibm);color:var(--ibm)}
+  .cmd.bob{background:var(--bob-bg);border-color:var(--bob-line);color:#3b2a78;padding-left:42px}
+  .cmd.bob::before{content:"🗣";position:absolute;left:12px;top:10px;font-size:16px}
+  .cmd.bob .copy:hover{border-color:var(--bob);color:var(--bob)}
+  code.inline{background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13.5px;color:#0b3a8f}
+  kbd{background:#fff;border:1px solid #c6c6c6;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12.5px}
+
+  /* persona hat */
+  .hat{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;padding:2px 9px;border-radius:999px;
+    background:#ede4ff;color:var(--bob);text-transform:uppercase}
+
+  /* follow-along STEP */
+  .step{border-left:3px solid var(--line);padding:1px 0 2px 14px;margin:16px 0}
+  .step.say{border-color:var(--bob)} .step.run{border-color:#9a9a9a}
+  .step-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+  .step.say .step-h{color:var(--bob)} .step.run .step-h{color:var(--muted)}
+  .step-h .n{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 5px;border-radius:999px;
+    font-size:11.5px;color:#fff;flex:none}
+  .step.say .n{background:var(--bob)} .step.run .n{background:#9a9a9a}
+  .expect{background:#f0faf3;border:1px solid #c7ebd3;border-radius:8px;padding:7px 11px;margin-top:8px;font-size:13.5px;color:#0e4f2b}
+  .expect b{color:var(--ok)}
+  .expect .lbl{font-weight:800;text-transform:uppercase;font-size:10.5px;letter-spacing:.05em;color:var(--ok);margin-right:7px}
+  /* "what it actually looks like" — real captured Bob run, collapsed by default */
+  details.real{margin:6px 0 2px}
+  details.real>summary{cursor:pointer;list-style:none;font-size:12.5px;font-weight:700;color:var(--bob);
+    padding:4px 2px;user-select:none;display:flex;align-items:center;gap:6px}
+  details.real>summary::-webkit-details-marker{display:none}
+  details.real>summary::before{content:'▸';font-size:11px}
+  details.real[open]>summary::before{content:'▾'}
+  .term{background:#0b1020;border:1px solid #1c2740;border-radius:9px;overflow:hidden;margin:4px 0 8px}
+  .term .bar{background:#161f38;color:#8aa0c8;font:600 11px var(--mono,"SF Mono",monospace);padding:5px 11px;border-bottom:1px solid #1c2740}
+  .term pre{margin:0;padding:11px;color:#d7e0f5;font:12px/1.5 "SF Mono",ui-monospace,Menlo,Consolas,monospace;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  .term .you{color:#c8b3ff}.term .tool{color:#7fb0ff;font-weight:700}.term .out{color:#9fe0b8}.term .bad{color:#ff8aa0;font-weight:700}.term .dim{color:#6b7aa0}
+
+  /* callouts */
+  .note{border-left:4px solid var(--ibm);background:#edf5ff;border-radius:0 9px 9px 0;padding:12px 16px;margin:12px 0;color:#0b3a8f;font-size:14.5px}
+  .note.bob{border-left-color:var(--bob);background:var(--bob-bg);color:#3b2a78}
+  .warnbox{border-left:4px solid var(--warn);background:var(--warn-bg);border-radius:0 9px 9px 0;padding:12px 16px;margin:12px 0;color:#5b4708;font-size:14.5px}
+
+  table{width:100%;border-collapse:collapse;margin:6px 0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+  th{background:#fafafc;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  tr:last-child td{border-bottom:0}
+  .verdict{font-weight:700;font-size:12.5px;padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .v-block{background:#fff1f1;color:var(--block)} .v-mask{background:#edf5ff;color:var(--ibm-dark)} .v-allow{background:#defbe6;color:var(--ok)}
+  pre{background:#0b1020;color:#d7e0f5;border-radius:9px;padding:13px;overflow:auto;font-size:12.5px;line-height:1.5;margin:8px 0}
+
+  footer{border-top:1px solid var(--line);padding:26px 0 48px;color:var(--muted);font-size:14px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    padding:9px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">IBM Bob Developer Day · Follow along</div>
+    <h1>Build an MCP server with Bob — then govern it</h1>
+    <p class="tag">You prompt Bob to do the real work; ContextForge governs every call. Four stages, ~10 minutes.</p>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#setup">Setup</a>
+  <a href="#s1">① Build</a>
+  <a href="#s2">② Govern</a>
+  <a href="#s3">③ Controls</a>
+  <a href="#s4">④ Mesh</a>
+  <a href="cockpit.html" class="right">Presenting? → Cockpit guide</a>
+</div></nav>
+
+<main><div class="wrap">
+
+  <div class="note bob">
+    <b>How to read each step:</b>
+    🗣 <b>purple box = say it to Bob</b> &nbsp;·&nbsp; ⌨ <b>gray box = run it in your terminal</b> &nbsp;·&nbsp;
+    <span class="lbl" style="color:var(--ok);font-weight:800;font-size:11px">▸ You'll see</span> <b>green = what happens next.</b><br>
+    Bob wears <b>three hats</b> — <span class="hat">Builder</span> <span class="hat">Operator</span> <span class="hat">Analyst</span> — and each is just a different gateway connection (more in Stage ②).
+  </div>
+
+  <!-- ════ SETUP ════ -->
+  <h2 id="setup"><span class="num">0</span>First — how are you following along?</h2>
+  <p class="lede">Running the whole mesh needs Docker and ~10 images — heavy for a laptop on conference WiFi. Pick what fits; often this browser is all you need.</p>
+  <table>
+    <thead><tr><th style="width:25%">Your setup</th><th style="width:27%">Pick this if…</th><th>What you do</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>① Browser only</b><br><span class="pill">zero install</span></td>
+        <td>You just want to read along, or your laptop/WiFi isn't cooperating.</td>
+        <td>You're already here — every prompt below is a copy-paste card. Watch the presenter run the rest.</td>
+      </tr>
+      <tr>
+        <td><b>② Bob + cloud mesh</b> <span class="pill rec">⭐</span></td>
+        <td>You want to drive Bob hands-on without running Docker locally.</td>
+        <td>The mesh runs in a <b>GitHub Codespace</b>; your laptop needs <b>only IBM Bob</b>.
+          <a href="https://codespaces.new/manavgup/ai-agent-controlplane-demo?quickstart=1"><b>Open in Codespaces ↗</b></a> → make port <b>4444 Public</b> → run <code class="inline">make connect</code> → paste the printed <code class="inline">bob mcp add … -t http</code> line into your Bob. <span style="color:var(--block)"><b>Gotcha:</b></span> use <code class="inline">-t http</code> (never SSE), from an <b>empty folder</b>.</td>
+      </tr>
+      <tr>
+        <td><b>③ Watch the presenter</b><br><span class="pill">watch-along</span></td>
+        <td>You'd rather just watch — zero setup.</td>
+        <td>Open the Companion link/QR the presenter shares (it streams the governed activity). Nothing to install.</td>
+      </tr>
+      <tr>
+        <td><b>④ Fully local</b><br><span class="pill">your machine</span></td>
+        <td>You want it all on your own machine — best set up before the session.</td>
+        <td>One command: <code class="inline">make quickstart</code> → the finished governed mesh, proves 16/16.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note"><b>Which steps below are yours?</b> The ⌨ gray <code class="inline">make</code> commands run <em>wherever the mesh lives</em> — your machine (④), your Codespace (②), or the presenter's (①③). The 🗣 Bob prompts run in <em>your</em> Bob. <b>Only Bob + a shared gateway?</b> Do <b>Stage ③'s</b> prompts live and <b>watch ①–②</b> (building your own tool needs the stack on your side). &nbsp;<b>Rule of thumb: ⌨ runs where the mesh lives; 🗣 runs in your Bob.</b></div>
+
+  <details class="twisty" style="margin-top:14px"><summary>Architecture — what you're building (optional)</summary>
+    <div class="twisty-body">
+      <p class="lede" style="margin-top:0">Bob drives a fintech (“FinByte”) agent mesh, but never touches the backends directly. Every tool call <em>and</em> every agent-to-agent call flows through <b>ContextForge</b> — the one governed seam that authenticates, authorizes, redacts, and audits before Bob sees a result or any money moves. An OPA sidecar decides policy.</p>
+      <img src="diagrams/architecture.svg" alt="IBM Bob connects through ContextForge (with an OPA sidecar) to six MCP servers and two cross-language A2A agents; the gateway governs every call." style="display:block;width:100%;height:auto;border-radius:9px;border:1px solid var(--line)">
+    </div>
+  </details>
+
+  <!-- ════ STAGE 1 ════ -->
+  <h2 id="s1"><span class="num">1</span>Build — Bob writes an MCP server from scratch <span class="pill port" style="margin-left:auto">ungoverned · :8000</span></h2>
+  <p class="lede">The starting point every developer knows: a plain MCP server on your laptop. No gateway, no policy, no auth — whoever reaches the port runs any tool. That exposure is the problem Stage ② fixes.</p>
+  <div class="step say">
+    <div class="step-h"><span class="n">1</span><span class="hat">Builder</span> 🗣 Say this to Bob</div>
+    <div class="cmd bob">Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.<button class="copy" data-copy="Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> Bob write <code class="inline">mcp-servers/sales-tax/server.py</code> — a working FastMCP server. If it won't start, paste the error back and Bob fixes its own code.</div>
+    <details class="real"><summary>See Bob's actual run</summary>
+      <div class="term"><div class="bar">bob — Builder · build</div><pre><span class="dim">&lt;thinking&gt; create a FastMCP server with the add_tax tool and a health endpoint &lt;/thinking&gt;</span>
+<span class="tool">[using tool write_to_file: mcp-servers/sales-tax/server.py]</span>
+  @mcp.tool()
+  def add_tax(amount, rate_pct=8.5) -&gt; dict: …
+  <span class="out">@mcp.custom_route("/health", methods=["GET"])</span>
+  mcp.run(<span class="out">transport="http"</span>, host="0.0.0.0", port=8000)
+<span class="tool">[attempt_completion]</span>  <span class="dim">Cost: 0.06</span></pre></div>
+    </details>
+  </div>
+  <div class="step run">
+    <div class="step-h"><span class="n">2</span> ⌨ Run in your terminal — serve it + call it</div>
+    <div class="cmd">make stage1-build<button class="copy" data-copy="make stage1-build">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> the server run bare on <code class="inline">:8000</code> and prove itself: <b>add_tax(100, 8.5) → tax=8.50, total=108.50</b> — with <b>no token, no policy, no audit</b>. Anyone on the network could call it. <b>That's the problem.</b></div>
+    <details class="real"><summary>See the actual output</summary>
+      <div class="term"><div class="bar">make stage1-build</div><pre>  ✔ live &amp; UNGOVERNED at http://localhost:8000/mcp   <span class="dim">(the server Bob just wrote)</span>
+  <span class="out">add_tax(100, 8.5) -&gt; tax=8.50, total=108.50</span>   <span class="bad">(no token, no policy — anyone on :8000 can call this)</span>
+  ✔ called add_tax over MCP — no token, no policy, no audit.</pre></div>
+    </details>
+  </div>
+  <div class="warnbox"><b>If Bob's file won't run:</b> <code class="inline">make stage1-scaffold</code> drops in a known-good server, then re-run <code class="inline">make stage1-build</code>.</div>
+
+  <!-- ════ STAGE 2 ════ -->
+  <h2 id="s2"><span class="num">2</span>Govern — register → grant → call <span class="pill port" style="margin-left:auto">governed · :4444</span></h2>
+  <p class="lede">Building is easy; <b>governing</b> is the hard part ContextForge solves. Carry the tool you built into the mesh, then watch the throughline: registering only catalogs it — <b>granting</b> is what makes it callable.</p>
+  <div class="step run">
+    <div class="step-h"><span class="n">1</span> ⌨ Run in your terminal — containerize + bring the stack up</div>
+    <div class="cmd">make stage2-govern<button class="copy" data-copy="make stage2-govern">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> your <code class="inline">sales-tax</code> tool containerized onto the mesh and the gateway come up. Bob is switched to the <span class="hat">Operator</span> hat.</div>
+  </div>
+
+  <details class="twisty"><summary>🔌 How does Bob connect to the gateway? (the “hat” is just an MCP connection)</summary>
+    <div class="twisty-body">
+      <p style="margin-top:0">“Switched to the Operator hat” isn't magic — <code class="inline">make bob-operator</code> just writes Bob's <b>MCP server connection</b>. Here's the real thing — this is exactly what <code class="inline">make connect</code> prints, filled in:</p>
+      <div class="cmd">bob mcp add finbyte-gateway "http://localhost:4444/servers/&lt;vserver-UUID&gt;/mcp" -t http -H "Authorization: Bearer &lt;token&gt;" --trust<button class="copy" data-copy='bob mcp add finbyte-gateway "http://localhost:4444/servers/<vserver-UUID>/mcp" -t http -H "Authorization: Bearer <token>" --trust'>copy</button></div>
+      <p>…or add it in <b>Bob's UI</b> (the MCP manager). Inspect your connections with <code class="inline">bob mcp list</code>.</p>
+      <div class="note bob"><b>The whole trick:</b> a <b>persona</b> is just <em>which gateway virtual-server UUID</em> you point Bob at — <span class="hat">Analyst</span>, <span class="hat">Operator</span>, or <span class="hat">Builder</span>. Same gateway, same token; swap the UUID → swap the toolset. <b>That's RBAC, made of one URL.</b></div>
+    </div>
+  </details>
+
+  <div class="step say">
+    <div class="step-h"><span class="n">2</span><span class="hat">Operator</span> 🗣 Say this to Bob — register it</div>
+    <div class="cmd bob">Register the sales-tax service at http://sales-tax:8000/mcp.<button class="copy" data-copy="Register the sales-tax service at http://sales-tax:8000/mcp.">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> Bob call <b>register-mcp-server</b> → sales-tax appears in the catalog, token-gated — but <b>Bob still can't call it</b>. Granting is a separate step. <b>That gate is least-privilege.</b></div>
+    <details class="real"><summary>See Bob's actual run</summary>
+      <div class="term"><div class="bar">bob — Operator · register</div><pre><span class="tool">[using tool controlplane-register-mcp-server: {"name":"sales-tax","url":"http://sales-tax:8000/mcp"}]</span>
+<span class="out">{"registered":true,"status_code":200,"name":"sales-tax", … "enabled":true,"reachable":true}</span>
+<span class="tool">[using tool controlplane-list-control-plane: {}]</span>
+<span class="out">mcp_servers:[sales-tax, controlplane, notify, policy-docs, erp-payments, expense-db]</span></pre></div>
+    </details>
+  </div>
+  <div class="step run">
+    <div class="step-h"><span class="n">3</span> ⌨ Run in your terminal — grant it to your agent</div>
+    <div class="cmd">make salestax-grant<button class="copy" data-copy="make salestax-grant">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> <code class="inline">add_tax</code> granted into a <b>Builder</b> virtual server, and Bob switched to the <span class="hat">Builder</span> hat — now it can call the tool it built.</div>
+  </div>
+  <div class="step say">
+    <div class="step-h"><span class="n">4</span><span class="hat">Builder</span> 🗣 Say this to Bob — call the tool you built</div>
+    <div class="cmd bob">Add sales tax to $100.<button class="copy" data-copy="Add sales tax to $100.">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> Bob call <b>sales-tax-add-tax</b> through the gateway (the only tool it can see) → <b>108.50, governed</b>. The tool you ran wide-open on <code class="inline">:8000</code> now runs token-gated through one seam. Built → governed → <b>used</b>.</div>
+    <details class="real"><summary>See Bob's actual run</summary>
+      <div class="term"><div class="bar">bob — Builder · call</div><pre><span class="tool">[using tool sales-tax-add-tax: {"amount":100}]</span>   <span class="dim"># the ONLY tool this persona can see</span>
+<span class="out">{"amount":100.0,"rate_pct":8.5,"tax":8.5,"total":108.5}</span>
+<span class="tool">[attempt_completion]</span>  Total: <span class="out">$108.50</span>  <span class="dim">Cost: 0.06</span></pre></div>
+    </details>
+  </div>
+  <details class="twisty"><summary>Bonus — have Bob extend an <em>existing</em> service (fx-rates)</summary>
+    <div class="twisty-body">
+      <div class="step say" style="margin-top:0">
+        <div class="step-h"><span class="n">5</span><span class="hat">Builder</span><span class="hat">Operator</span> 🗣 Say this to Bob</div>
+        <div class="cmd bob">Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it.<button class="copy" data-copy="Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it.">copy</button></div>
+        <div class="cmd bob">Re-register fx-rates and convert 1000 USD to EUR.<button class="copy" data-copy="Re-register fx-rates and convert 1000 USD to EUR.">copy</button></div>
+        <div class="expect"><span class="lbl">You'll see</span> Bob add a <code class="inline">convert</code> tool to a service it didn't write, rebuild, re-register, and run it — both <b>build-from-scratch</b> and <b>extend-existing</b>, governed.</div>
+      </div>
+    </div>
+  </details>
+  <div class="warnbox"><b>If a live edit wobbles</b> (does it all deterministically): <code class="inline">make salestax-register</code>, <code class="inline">make salestax-grant</code>, <code class="inline">make fxrates-extend</code>.</div>
+
+  <!-- ════ STAGE 3 ════ -->
+  <h2 id="s3"><span class="num">3</span>Control — the four guardrails fire <span class="pill rec" style="margin-left:auto">the payoff</span></h2>
+  <p class="lede">Being in the catalog buys auth + one seam. The <em>interesting</em> controls live in the FinOps mesh — watch each one bite a real call Bob makes. <b>This is the part a connected-only Bob (option ②) can drive live.</b></p>
+  <div class="step run">
+    <div class="step-h"><span class="n">1</span> ⌨ Run in your terminal — seed the FinOps mesh</div>
+    <div class="cmd">make stage3-controls<button class="copy" data-copy="make stage3-controls">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> the FinOps mesh seeded and Bob switched to the <span class="hat">Analyst</span> hat (8 tools, no wire).</div>
+  </div>
+  <div class="step run">
+    <div class="step-h"><span class="n">2</span> ⌨ Run in a second pane — watch the decisions</div>
+    <div class="cmd">make logs-opa<button class="copy" data-copy="make logs-opa">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> a live <b>ALLOW / DENY</b> stream — every policy decision with its reason, in real time.</div>
+  </div>
+  <div class="step say">
+    <div class="step-h"><span class="n">3</span><span class="hat">Analyst</span> 🗣 Say this to Bob — one prompt hits all four controls</div>
+    <div class="cmd bob">Process today's pending expenses end to end. For each: read it, check its receipt, approve and reimburse anything clean, and flag anything that needs a wire.<button class="copy" data-copy="Process today's pending expenses end to end. For each: read it, check its receipt, approve and reimburse anything clean, and flag anything that needs a wire.">copy</button></div>
+    <div class="expect" style="margin-bottom:0"><span class="lbl">You'll see</span> Bob work the queue — and ContextForge bite each call as it happens:</div>
+  </div>
+  <table style="margin-top:6px">
+    <thead><tr><th>When Bob touches…</th><th>The control that fires</th></tr></thead>
+    <tbody>
+      <tr><td><code class="inline">exp_pii</code></td><td><span class="verdict v-mask">REDACTED</span> SSN/card/key → <code class="inline">***-**-6789</code>, <code class="inline">[SECRET_REDACTED]</code></td></tr>
+      <tr><td><code class="inline">exp_injection</code></td><td><span class="verdict v-block">NEUTRALIZED</span> embedded instruction → <code class="inline">[INJECTION_BLOCKED]</code></td></tr>
+      <tr><td><code class="inline">exp_big</code> ($50k)</td><td><span class="verdict v-block">BLOCKED</span> by OPA — cross-language Python→Rust wire over the cap</td></tr>
+      <tr><td>(Bob itself)</td><td>has <b>no wire tool</b> — least-privilege / RBAC</td></tr>
+    </tbody>
+  </table>
+  <details class="real"><summary>See Bob's actual runs (real transcripts)</summary>
+    <div class="term"><div class="bar">bob — Analyst · "fetch receipt rcpt_pii verbatim"</div><pre><span class="tool">[using tool expense-db-get-receipt: {"id":"rcpt_pii"}]</span>
+<span class="out">Reimbursement for J. Doe. SSN ***-**-6789, card ****-****-****-1111 … api key [SECRET_REDACTED]. Total $240.00.</span>
+<span class="dim">Bob never saw the raw values — masked on the gateway.</span></pre></div>
+    <div class="term"><div class="bar">bob — Analyst · "ask the auditor agent to pay $50,000"</div><pre><span class="tool">[using tool a2a-auditor: {"query":"Request a $50,000 wire payment to Acme LLC …"}]</span>
+<span class="bad">BLOCKED by control-plane policy: Wire amount 50000 exceeds the $10,000 auto-approve
+limit and requires dual approval (approval=true). FinByte T&E policy §2.</span>
+<span class="dim">Same block fires cross-language on the Rust payments agent.</span></pre></div>
+    <div class="term"><div class="bar">bob — Analyst · "fetch receipt rcpt_injection verbatim"</div><pre><span class="tool">[using tool expense-db-get-receipt: {"id":"rcpt_injection"}]</span>
+<span class="out">Catering invoice. [INJECTION_BLOCKED] [INJECTION_BLOCKED] Total $65.00.</span></pre></div>
+  </details>
+  <div class="warnbox"><b>Proof any time, no Bob needed:</b> <code class="inline">make verify-controls</code> → <b style="color:var(--ok)">16 passed, 0 failed</b>. &nbsp;Full transcripts + screenshots: <a href="evidence/walkthrough.html">evidence/walkthrough.html</a>.</div>
+
+  <!-- ════ STAGE 4 ════ -->
+  <h2 id="s4"><span class="num">4</span>Mesh — you just built the quickstart</h2>
+  <p class="lede">This is where <code class="inline">make quickstart</code> would have dropped you in one shot — but you built it stage by stage.</p>
+  <div class="step run">
+    <div class="step-h"><span class="n">1</span> ⌨ Run in your terminal — prove it end-to-end</div>
+    <div class="cmd">make stage4-mesh<button class="copy" data-copy="make stage4-mesh">copy</button></div>
+    <div class="expect"><span class="lbl">You'll see</span> the full governed mesh proven: <b>16 passed, 0 failed</b>. Identical to <code class="inline">make quickstart</code>'s end-state — but you watched it get built.</div>
+  </div>
+  <p style="color:var(--muted)">Presenting? The <a href="cockpit.html"><b>Cockpit guide</b></a> covers the watch panes (monitor, inspectors, Companion) and troubleshooting.</p>
+
+  <details class="twisty" style="margin-top:18px"><summary>↺ Reset / repeat a beat</summary>
+    <div class="twisty-body">
+      <div class="cmd">make stage-reset        <span style="color:var(--muted)"># stop bare server + container, delete generated server.py</span><button class="copy" data-copy="make stage-reset">copy</button></div>
+      <div class="cmd">make demo-reset         <span style="color:var(--muted)"># recreate + reseed the gateway to known-good</span><button class="copy" data-copy="make demo-reset">copy</button></div>
+    </div>
+  </details>
+
+</div></main>
+
+<footer><div class="wrap">
+  <div>IBM Bob × ContextForge — follow-along build guide</div>
+  <div><a href="cockpit.html">Presenter cockpit →</a> &nbsp;·&nbsp; <a href="https://github.com/manavgup/ai-agent-controlplane-demo" target="_blank">GitHub</a></div>
+</div></footer>
+
+<div class="toast" id="toast">Copied</div>
+<script>
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.getAttribute('data-copy');
+      navigator.clipboard.writeText(t).then(function(){
+        b.textContent='copied';
+        var toast=document.getElementById('toast');
+        toast.textContent='Copied: '+(t.length>40?t.slice(0,40)+'…':t);
+        toast.classList.add('show');
+        setTimeout(function(){toast.classList.remove('show')},1300);
+        setTimeout(function(){b.textContent='copy'},1200);
+      });
+    });
+  });
+</script>
+</body>
+</html>

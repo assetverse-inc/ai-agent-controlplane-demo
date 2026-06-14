@@ -28,7 +28,7 @@ gateway you're running — Codespace, VM, or localhost.
 
 ## Tier 1 — Zero install, browser only (everyone)
 
-The prompt-card page is **static HTML** — `docs/cockpit.html` (or `make dev-start`).
+The prompt-card page is **static HTML** — `docs/build.html` (or `make dev-start`).
 It opens in any browser with no tools and carries every stage's Bob prompts. Good for
 read-along, and as the fallback when someone's environment fights them.
 
@@ -73,7 +73,7 @@ builds images locally — fine the night before, **risky for a whole room at onc
 
 | You want… | Do this |
 |---|---|
-| Read-along, no install | open `docs/cockpit.html` (`make dev-start`) |
+| Read-along, no install | open `docs/build.html` (`make dev-start`) |
 | Hands-on, only Bob local | Codespace → make 4444 Public → `make connect` |
 | Watch-along, nothing local | presenter VM/Codespace → share Companion `:7070` |
 | Everything local | `make check` → `make quickstart` (or the bootstrap script) |

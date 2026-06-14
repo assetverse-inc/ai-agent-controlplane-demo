@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IBM Bob × ContextForge — How to run the demo</title>
+<title>IBM Bob × ContextForge — Presenter cockpit</title>
 <style>
   :root{
     --ibm:#0f62fe; --ibm-dark:#0043ce; --ink:#161616; --muted:#525252;
@@ -64,7 +64,7 @@
   .stage{border-left:4px solid var(--ibm)}
   .stagenum{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;
     background:var(--ibm);color:#fff;font-size:14px;font-weight:700;flex:none}
-  .saybob{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ibm-dark);margin:14px 0 2px}
+  .saybob{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#6929c4;margin:14px 0 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .runlabel{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:6px 0 2px}
 
   /* collapsible sections (build view twisties) */
@@ -114,6 +114,34 @@
     background:#fff;color:var(--muted);border-radius:7px;font-size:12px;font-weight:600;
     padding:3px 9px;cursor:pointer;line-height:1.4}
   .cmd .copy:hover{border-color:var(--ibm);color:var(--ibm)}
+  /* SAY-THIS-TO-BOB prompt — purple, speech icon — distinct from gray shell commands */
+  .cmd.bob{background:#f6f3ff;border-color:#dcccff;color:#3b2a78;padding-left:42px}
+  .cmd.bob::before{content:"🗣";position:absolute;left:12px;top:10px;font-size:16px}
+  .cmd.bob .copy:hover{border-color:#6929c4;color:#6929c4}
+  /* persona "hat" badge */
+  .hat{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;
+    padding:2px 9px;border-radius:999px;background:#ede4ff;color:#6929c4;text-transform:uppercase}
+  .saybob .hat{margin-left:2px}
+  /* "→ what Bob does / what you see" annotation under a prompt */
+  .bobdoes{font-size:13.5px;color:var(--muted);margin:2px 0 4px;padding-left:2px}
+  .bobdoes b{color:#6929c4}
+  /* follow-along STEP: a do-action (say / run) + a "you'll see" line */
+  .step{border-left:3px solid var(--line);padding:1px 0 2px 14px;margin:16px 0}
+  .step.say{border-color:#6929c4}
+  .step.run{border-color:#9a9a9a}
+  .step-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+  .step.say .step-h{color:#6929c4}
+  .step.run .step-h{color:var(--muted)}
+  .step-h .n{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 5px;
+    border-radius:999px;font-size:11.5px;color:#fff;flex:none}
+  .step.say .n{background:#6929c4}
+  .step.run .n{background:#9a9a9a}
+  .expect{background:#f0faf3;border:1px solid #c7ebd3;border-radius:8px;
+    padding:7px 11px;margin-top:8px;font-size:13.5px;color:#0e4f2b}
+  .expect b{color:#198038}
+  .expect .lbl{font-weight:800;text-transform:uppercase;font-size:10.5px;
+    letter-spacing:.05em;color:#198038;margin-right:7px}
   code.inline{background:var(--code-bg);border:1px solid var(--line);border-radius:6px;
     padding:1px 6px;font-size:13.5px;color:#0b3a8f}
   kbd{background:#fff;border:1px solid #c6c6c6;border-bottom-width:2px;border-radius:6px;
@@ -181,11 +209,8 @@
 
 <nav class="toc">
   <div class="wrap">
-    <div class="modes">
-      <button class="mode" data-view="build">🎓 Progressive Build</button>
-      <button class="mode" data-view="cockpit">🛰 Cockpit</button>
-    </div>
     <div class="toclinks">
+      <a href="build.html" style="color:var(--ibm);font-weight:700">🎓 Follow-along build guide →</a>
       <a href="#arch">Architecture</a>
       <a href="#start">60-second start</a>
       <a href="#cockpit">Your cockpit</a>
@@ -202,150 +227,8 @@
 <main>
 <div class="wrap">
 
-  <!-- ════════════════ PROGRESSIVE BUILD VIEW (Dev Day) ════════════════ -->
-  <div id="view-build" class="view">
-
-    <section>
-      <h2 style="margin-bottom:8px">Build an MCP server in 2 minutes — then watch it get governed</h2>
-      <p class="lede">Four stages. At each one <b>you prompt IBM Bob</b> to do the real work — build the server, <b>containerize it</b>, register it, grant it, drive the controls — while <code class="inline">make</code> handles the plumbing. Copy the prompts straight from here into Bob. Every stage has a one-command fallback if a live edit wobbles.</p>
-      <div class="note">The all-at-once path is <code class="inline">make quickstart</code>; the watch-everything window is the <b>🛰 Cockpit</b> tab.</div>
-      <div class="controls-row">
-        <button onclick="document.querySelectorAll('#view-build details.twisty').forEach(function(d){d.open=true})">⊞ Expand all</button>
-        <button onclick="document.querySelectorAll('#view-build details.twisty').forEach(function(d){d.open=false})">⊟ Collapse all</button>
-      </div>
-    </section>
-
-    <details class="twisty" open>
-      <summary>Architecture at a glance</summary>
-      <div class="twisty-body">
-        <p class="lede" style="margin-top:0">IBM Bob drives a fintech (&ldquo;FinByte&rdquo;) agent mesh, but it never touches the backends directly. Every tool call <em>and</em> every agent-to-agent call flows through <b>IBM ContextForge</b> — the one governed seam that authenticates, authorizes, redacts, and audits <em>before</em> Bob sees a result and <em>before</em> any money moves. An OPA sidecar decides policy; the four controls are enforced right here.</p>
-        <img src="diagrams/architecture.svg" alt="Reference architecture: IBM Bob connects through ContextForge with an OPA sidecar to six MCP servers and two cross-language A2A agents; the gateway governs every call.">
-      </div>
-    </details>
-
-    <details class="twisty">
-      <summary>No Docker on your laptop? Drive the whole mesh with just Bob</summary>
-      <div class="twisty-body">
-        <p>You don't need Docker, <code class="inline">uv</code>, or <code class="inline">make</code> to <em>drive</em> this. If the governed stack is running somewhere — a teammate's machine, a VM, or a <b>GitHub Codespace</b> — your laptop only needs IBM Bob. One command points Bob at the gateway over HTTPS:</p>
-        <div class="cmd">make connect<button class="copy" data-copy="make connect">copy</button></div>
-        <p style="margin-bottom:0">It prints a ready-to-paste <code class="inline">bob mcp add finbyte-gateway … -t http</code> line (streamable-HTTP on <code class="inline">/mcp</code> — verified through the Codespaces proxy). Redaction, least-privilege, and OPA all still apply over that remote connection. See <code class="inline">docs/ONBOARDING.md</code>.</p>
-      </div>
-    </details>
-
-    <details class="twisty" open>
-      <summary><span class="stagenum">1</span> Bob builds an MCP server <em>from scratch</em> <span class="pill port">ungoverned · :8000</span></summary>
-      <div class="twisty-body">
-        <p>The starting point every developer knows: a plain MCP server on your laptop. No gateway, no policy, no auth — whoever reaches the port runs any tool. <b>That exposure is the problem Stage 2 solves.</b></p>
-        <div class="saybob">① Tell Bob to build it</div>
-        <div class="cmd">Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.<button class="copy" data-copy="Create a new MCP server with fastmcp at mcp-servers/sales-tax/server.py: a tool add_tax(amount, rate_pct=8.5) returning {amount, rate_pct, tax, total}, plus a GET /health route, served over HTTP on 0.0.0.0:8000.">copy</button></div>
-        <p class="note" style="margin-top:0">Bob writes, runs, and fixes its own code — if the first <code class="inline">server.py</code> won't start, paste the error back and Bob iterates until it runs.</p>
-        <details class="twisty">
-          <summary>What Bob produced (<code class="inline">mcp-servers/sales-tax/server.py</code>)</summary>
-          <div class="twisty-body">
-            <pre><code>from fastmcp import FastMCP
-
-mcp = FastMCP("sales-tax")
-
-@mcp.tool
-def add_tax(amount: float, rate_pct: float = 8.5) -> dict:
-    """Add sales tax to an amount. `rate_pct` is a percentage, e.g. 8.5 for 8.5%."""
-    tax = round(amount * rate_pct / 100, 2)
-    return {
-        "amount": amount,
-        "rate_pct": rate_pct,
-        "tax": tax,
-        "total": round(amount + tax, 2),
-    }
-
-@mcp.custom_route("/health", methods=["GET"])
-async def health(request):
-    from starlette.responses import JSONResponse
-    return JSONResponse({"status": "ok", "server": "sales-tax"})
-
-if __name__ == "__main__":
-    mcp.run(transport="http", host="0.0.0.0", port=8000)</code></pre>
-          </div>
-        </details>
-        <div class="runlabel">② Serve it bare + call it</div>
-        <div class="cmd">make stage1-build<button class="copy" data-copy="make stage1-build">copy</button></div>
-        <p>It runs the server bare on <code class="inline">:8000</code> and calls the tool to prove it works:</p>
-        <div class="cmd">add_tax(100, 8.5) → tax=8.50, total=108.50   <span style="color:var(--muted)"># no token, no policy</span></div>
-        <p style="margin-bottom:0"><b>That's exactly the problem.</b> Anyone on the network calls anything — no redaction, no policy, no audit. (Want to poke it by hand? <code class="inline">make stage1-build</code> also opens the MCP Inspector, no token field.)</p>
-        <div class="warnbox"><b>Fallback</b> if Bob's file won't run: <code class="inline">make stage1-scaffold</code> drops in a known-good <code class="inline">sales-tax</code> server, then re-run <code class="inline">make stage1-build</code>.</div>
-      </div>
-    </details>
-
-    <details class="twisty" open>
-      <summary><span class="stagenum">2</span> Put a tool behind ContextForge <span class="pill port">governed · :4444</span></summary>
-      <div class="twisty-body">
-        <p>Building is easy; <b>governing</b> is the hard part ContextForge solves. Carry the tool you just built into the mesh — then watch the grant be the thing that makes it callable.</p>
-        <div class="runlabel">①  Containerize + bring the stack up (operator persona)</div>
-        <div class="cmd">make stage2-govern<button class="copy" data-copy="make stage2-govern">copy</button></div>
-        <div class="saybob">②a Register it — tell Bob (operator)</div>
-        <div class="cmd">Register the sales-tax service at http://sales-tax:8000/mcp.<button class="copy" data-copy="Register the sales-tax service at http://sales-tax:8000/mcp.">copy</button></div>
-        <p>Now it's in the catalog, token-gated — but Bob <b>still can't call it</b>. Exposing a tool to an agent is a separate grant. <b>That gate is least-privilege.</b></p>
-        <div class="runlabel">②b Grant it, then call it</div>
-        <div class="cmd">make salestax-grant<button class="copy" data-copy="make salestax-grant">copy</button></div>
-        <div class="saybob">Now tell Bob (builder)</div>
-        <div class="cmd">Add sales tax to $100.<button class="copy" data-copy="Add sales tax to $100.">copy</button></div>
-        <p><b>→ governed call through <code class="inline">:4444</code> → 108.50.</b> The tool you ran wide-open on <code class="inline">:8000</code> now runs token-gated through the one seam. Built → governed → <b>used</b>.</p>
-        <div class="saybob">②c Bonus — have Bob extend an existing service (fx-rates)</div>
-        <div class="cmd">Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it.<button class="copy" data-copy="Add a convert(amount, base, quote) tool to the fx-rates service at mcp-servers/fx-rates/server.py, then rebuild it.">copy</button></div>
-        <div class="cmd">Re-register fx-rates and convert 1000 USD to EUR.<button class="copy" data-copy="Re-register fx-rates and convert 1000 USD to EUR.">copy</button></div>
-        <div class="warnbox"><b>Fallback</b> (does 2a–2c deterministically): <code class="inline">make salestax-register</code>, <code class="inline">make salestax-grant</code>, <code class="inline">make fxrates-extend</code>.</div>
-      </div>
-    </details>
-
-    <details class="twisty" open>
-      <summary><span class="stagenum">3</span> Turn the four controls on <span class="pill rec">4 controls fire</span></summary>
-      <div class="twisty-body">
-        <p>Being in the catalog buys auth + one seam. The <em>interesting</em> controls live in the FinOps mesh — watch each one bite a real call Bob makes.</p>
-        <div class="runlabel">① Seed the FinOps mesh + analyst persona</div>
-        <div class="cmd">make stage3-controls<button class="copy" data-copy="make stage3-controls">copy</button></div>
-        <div class="runlabel">② Open the live decision stream (second pane)</div>
-        <div class="cmd">make logs-opa<button class="copy" data-copy="make logs-opa">copy</button></div>
-        <div class="saybob">③ Tell Bob (analyst) — one prompt hits all four</div>
-        <div class="cmd">Process today's pending expenses end to end. For each: read it, check its receipt, approve and reimburse anything clean, and flag anything that needs a wire.<button class="copy" data-copy="Process today's pending expenses end to end. For each: read it, check its receipt, approve and reimburse anything clean, and flag anything that needs a wire.">copy</button></div>
-        <table style="margin-top:10px">
-          <thead><tr><th>Expense</th><th>Control that fires</th></tr></thead>
-          <tbody>
-            <tr><td><code class="inline">exp_pii</code></td><td><span class="verdict v-mask">REDACTED</span> SSN/card/key → <code class="inline">***-**-6789</code>, <code class="inline">[SECRET_REDACTED]</code></td></tr>
-            <tr><td><code class="inline">exp_injection</code></td><td><span class="verdict v-block">NEUTRALIZED</span> embedded instruction → <code class="inline">[INJECTION_BLOCKED]</code></td></tr>
-            <tr><td><code class="inline">exp_big</code> ($50k)</td><td><span class="verdict v-block">BLOCKED</span> by OPA — cross-language Python→Rust wire over the cap</td></tr>
-            <tr><td>(Bob itself)</td><td>has <b>no wire tool</b> — least-privilege / RBAC</td></tr>
-          </tbody>
-        </table>
-        <div class="warnbox"><b>Fallback / proof</b> any time, no Bob needed: <code class="inline">make verify-controls</code> → <b style="color:var(--ok)">16 passed, 0 failed</b>.</div>
-      </div>
-    </details>
-
-    <details class="twisty" open>
-      <summary><span class="stagenum">4</span> The full governed mesh <span class="pill rec">== quickstart</span></summary>
-      <div class="twisty-body">
-        <p>This is where <code class="inline">make quickstart</code> would have dropped you in one shot — but you built it stage by stage. Prove the whole thing, then pick a cockpit.</p>
-        <div class="runlabel">① Prove it end-to-end</div>
-        <div class="cmd">make stage4-mesh<button class="copy" data-copy="make stage4-mesh">copy</button></div>
-        <div class="runlabel">② Drive it from here</div>
-        <div class="cmd">make cockpit            <span style="color:var(--muted)"># tmux: Bob + logs + OPA + both inspectors</span><button class="copy" data-copy="make cockpit">copy</button></div>
-        <div class="cmd">make companion          <span style="color:var(--muted)"># browser evidence dashboard → :7070</span><button class="copy" data-copy="make companion">copy</button></div>
-        <div class="cmd">make bob-operator       <span style="color:var(--muted)"># Act 2 — Bob operates the control plane</span><button class="copy" data-copy="make bob-operator">copy</button></div>
-        <p style="margin-bottom:0">Switch to the <b>🛰 Cockpit</b> tab above for the full driving guide.</p>
-      </div>
-    </details>
-
-    <details class="twisty">
-      <summary>↺ Reset / repeat the beat</summary>
-      <div class="twisty-body">
-        <div class="cmd">make stage-reset        <span style="color:var(--muted)"># stop bare server + container, delete generated server.py, restore base fx-rates</span><button class="copy" data-copy="make stage-reset">copy</button></div>
-        <div class="cmd">make demo-reset         <span style="color:var(--muted)"># recreate + reseed the gateway to known-good</span><button class="copy" data-copy="make demo-reset">copy</button></div>
-        <div class="cmd">make fxrates-reset      <span style="color:var(--muted)"># restore base fx-rates (repeat the onboard beat)</span><button class="copy" data-copy="make fxrates-reset">copy</button></div>
-      </div>
-    </details>
-
-  </div><!-- /view-build -->
-
-  <!-- ════════════════ COCKPIT VIEW (drive the running stack) ════════════════ -->
-  <div id="view-cockpit" class="view">
+  <!-- ════════════════ COCKPIT — drive the running stack (presenter) ════════════════ -->
+  <div id="view-cockpit">
 
   <!-- 0 -->
   <section id="arch">
@@ -539,32 +422,6 @@ if __name__ == "__main__":
 <!-- make cockpit writes assets/cockpit-token.js (gitignored) with this session's token -->
 <script src="assets/cockpit-token.js" onerror="void 0"></script>
 <script>
-  // ── view switcher: 🎓 Progressive Build ⇄ 🛰 Cockpit ──────────────────────
-  // Default to Cockpit (so `make cockpit` opening this page is unchanged); land
-  // on the build prompt-card when opened with #build (the stageN targets do this).
-  (function(){
-    var STATUS={build:"Progressive build — prompt Bob through each stage",
-                cockpit:"The cockpit is running — here's how to drive it"};
-    function setView(v){
-      if(v!=='build'&&v!=='cockpit') v='cockpit';
-      document.querySelectorAll('.view').forEach(function(el){el.classList.toggle('active', el.id==='view-'+v);});
-      document.querySelectorAll('.mode').forEach(function(b){b.classList.toggle('active', b.getAttribute('data-view')===v);});
-      document.body.className='view-'+v;
-      var st=document.getElementById('statustext'); if(st) st.textContent=STATUS[v];
-      try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; }
-    }
-    document.querySelectorAll('.mode').forEach(function(b){
-      b.addEventListener('click',function(){setView(b.getAttribute('data-view'));window.scrollTo(0,0);});
-    });
-    function viewFromHash(){ return location.hash.replace('#','')==='build' ? 'build' : 'cockpit'; }
-    // Re-sync when the hash changes — e.g. `make dev-start` opens #build in a tab
-    // that's ALREADY showing Cockpit; without this the fragment changes but the
-    // view wouldn't re-render. Also covers bfcache restores (pageshow).
-    window.addEventListener('hashchange', function(){ setView(viewFromHash()); window.scrollTo(0,0); });
-    window.addEventListener('pageshow', function(){ setView(viewFromHash()); });
-    setView(viewFromHash());
-  })();
-
   // If make cockpit stamped a token, show it (copyable) in the MCP Inspector card.
   (function(){
     if(window.COCKPIT_TOKEN){

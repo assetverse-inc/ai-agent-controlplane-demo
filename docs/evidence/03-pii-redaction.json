@@ -1,0 +1,16 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Reimbursement for customer J. Doe. SSN ***-**-6789, card ****-****-****-1111 exp 04/27. Internal note: api key [SECRET_REDACTED]. Total $240.00."
+      }
+    ],
+    "isError": false,
+    "structuredContent": {
+      "result": "Reimbursement for customer J. Doe. SSN ***-**-6789, card ****-****-****-1111 exp 04/27. Internal note: api key [SECRET_REDACTED]. Total $240.00."
+    }
+  },
+  "id": 1
+}
